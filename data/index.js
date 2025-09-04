@@ -1,0 +1,4 @@
+export { mapArticle } from './articleDataMapper.js'
+export { mapCategory } from './categoryDataMapper.js'
+export { mapSponsor } from './sponsorDataMapper.js'
+export { mapUser } from './userDataMapper.js'
