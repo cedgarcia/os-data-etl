@@ -53,3 +53,10 @@ export const statusMap = {
   published: 'publish',
   draft: 'draft',
 }
+
+export const roles = {
+  1: '6853ba1e937f970002107660#0021', // EDITOR
+  2: '6853b7789735240002083ef6#0022', // WRITER
+  3: '6853b7649735240002083ef5#0018', // CONTRIBUTOR
+  4: '6853b6b19735240002083ef4#0020', // MEDIA TEAM
+}

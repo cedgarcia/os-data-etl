@@ -252,7 +252,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 // await migrateData('categories', 'test')
 // await migrateData('categories', 'batch')
-// await migrateData('categories', 'all')
+await migrateData('categories', 'all')
 // await migrateData('categories', 'custom')
 
 // await migrateData('users', 'test')
