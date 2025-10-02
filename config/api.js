@@ -14,18 +14,12 @@ const apiConfig = {
     users: '/api/users/',
     //contents
     contents: '/api/contents/',
-
     //categories
     categories: '/api/categories/',
-
     //sponsors
     sponsors: '/api/management-items/',
-
-    // ****FOR FUTURE******
-    // //media files
-    // images: '/api/media-files/'
-    // //main tags/leagues
-    // tags: '/api/leagues'
+    //media files
+    mediaFiles: '/api/media-files/',
   },
 }
 
