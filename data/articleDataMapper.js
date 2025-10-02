@@ -1,121 +1,49 @@
-import { cleanArticleBody } from '../utils/cleanArticleBody.js'
+// import { getMediaFileId } from '../utils/imageMappingHelper.js'
 import { websiteMap, leagueMap, categoryMap, statusMap } from './mappings.js'
+import { cleanArticleBody } from '../utils/cleanArticleBody.js'
 
-export const mapArticle = (old) => {
-  const webinyStatus = statusMap[old.status?.toLowerCase()]
+import { uploadToWebiny } from '../imageDownloader.js'
+export async function mapArticle(oldArticle) {
+  // Get the media file ID from the mapping
+  // const mediaFileId = oldArticle.image ? getMediaFileId(oldArticle.image) : null
 
-  // const refs = [
-  //   // {addedBy: authorsMap[]}//for author
-  //   // { model: 'mediaFile', id: body.mediaFileId },// for media files
-  //   { categoryId: categoryMap[old.category] },
-  //   { leagueId: leagueMap[old.subverticalid] },
-  //   { websiteId: websiteMap[old.verticalid] },
-  // ]
+  // if (oldArticle.image && !mediaFileId) {
+  //   console.warn(
+  //     `⚠️  Article ${oldArticle.id}: Image "${oldArticle.image}" not found in mapping`
+  //   )
+  // } else if (mediaFileId) {
+  //   console.log(`✅ Article ${oldArticle.id}: Mapped image to ${mediaFileId}`)
+  // }
+
+  const res = await uploadToWebiny(oldArticle.image, oldArticle.caption)
   return {
-    title: old.title,
-    lede: old.description,
-    story: cleanArticleBody(old.body),
-    // story: old.body,
+    title: oldArticle.title || '',
+    lede: oldArticle.description || '',
+    story: cleanArticleBody(oldArticle.body),
+    type: 'story',
+    status: 'publish',
+    slug: oldArticle.slug || '',
 
-    //type
+    // Map the media file ID
+    mediaFileId: res.mediaFileId,
 
-    // ref
-    categoryId: categoryMap[old.category],
-    leagueId: leagueMap[old.subverticalid],
-    websiteId: websiteMap[old.verticalid],
-    //end of ref
+    // Map other relationships
+    addedById: '689d5cd6fc81210002e29e29#0005',
+    categoryId: categoryMap[oldArticle.category],
+    leagueId: leagueMap[oldArticle.subverticalid],
+    websiteId: websiteMap[oldArticle.verticalid],
 
-    slug: old.slug,
+    // Additional fields
+    contentBlock: oldArticle.contentBlock || null,
+    body: oldArticle.body || null,
+    settings: oldArticle.settings || null,
 
-    status: webinyStatus,
-    publishedAt: old.post,
+    // Timestamps
+    publishedAt: oldArticle.published_at || null,
     author: {
-      name: old.author,
-    },
-    mediaFile: {
-      image: old.image,
-      caption: old.caption,
-      description: old.description,
-      tags: old.keywords,
+      name: oldArticle.author,
     },
   }
 }
 
-//===========================================
-
-// id    ->  ---
-// parent -> ---
-// type  -> type
-// title -> title
-// description -> lede
-// intro -> ---
-// blurb -> ---
-// keywords -> ---
-// redirect -> ---
-// url -> ---
-// body -> story
-// thumbnail ->
-// image ->  ---
-// banner -> ---
-// caption -> ---
-// post -> publishedAt
-// expiry ->
-// author -> ---
-// sequence -> ---
-// visible -> ---
-// target -> ---
-// status -> contentStatus
-// category -> category
-// static -> ---
-// video -> ---
-// permalink -> ---
-// audiolink -> ---
-// videolink -> ---
-// icon -> ---
-// active -> ---
-// sponsored -> ---
-// contributor -> ---
-// created -> ---
-// creator -> ---
-// uploaded -> ---
-// uploader -> ---
-// updated -> ---
-// updater -> ---
-// channeled -> ---
-// sectioned -> ---
-// videotype -> ---
-// videoed -> ---
-// planid -> ---
-// allowsearch -> ---
-// subscribertypeid-> ---
-// autoplay -> ---
-// showinpromo -> ---
-// ogimage -> ---
-// ogthumbnail -> ---
-// slug ->slug
-// displayonhomepage -> ---
-// hideadvertisement -> ---
-// carousel -> ---
-// carouselsequence -> ---
-// columnid -> ---
-
-//===================================
-// title
-// type
-// lede
-// story
-// mediaFile (reference....) -> media files
-// mainVideo (reference....) -> media files
-// category (reference...) -> category
-// league (reference...) -> leagues
-// website (reference...) -> websites
-// addedBy (reference...) ->users
-// contentBlock
-// settings
-// contentStatus
-// slug
-// previousSlug
-// nextSlug
-// publishedAt
-// unpublishedAt
-// hash
+export default mapArticle

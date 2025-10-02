@@ -87,16 +87,19 @@ const readDatabaseQuery = async (contentType, queryType = 'test') => {
 }
 
 // Data mapping function
-const mapData = (contentType, data) => {
+const mapData = async (contentType, data) => {
   switch (contentType) {
     case 'articles':
-      return data.map((item) => mapArticle(item))
+      const list = await Promise.all(data.map(async (item) => mapArticle(item)))
+
+      console.log('list:', list)
+      return list
     case 'categories':
-      return data.map((item) => mapCategory(item))
+      return await data.map((item) => mapCategory(item))
     case 'sponsors':
-      return data.map((item) => mapSponsor(item))
+      return await data.map((item) => mapSponsor(item))
     case 'users':
-      return data.map((item) => mapUser(item))
+      return await data.map((item) => mapUser(item))
     case 'websites':
       // Add website mapping if needed
       return data
@@ -138,8 +141,8 @@ export const migrateData = async (contentType, queryType = 'test') => {
     }
 
     // Map data to new format
-    const mappedData = mapData(contentType, oldData)
-    console.log(`🔄 Mapped ${mappedData.length} items`)
+    const mappedData = await mapData(contentType, oldData)
+    console.log(`🔄 Mapped ${mappedData.length} items`, mappedData)
 
     // Post data to Webiny
     let successCount = 0
@@ -148,6 +151,8 @@ export const migrateData = async (contentType, queryType = 'test') => {
     for (let i = 0; i < mappedData.length; i++) {
       const oldItem = oldData[i]
       const newItem = mappedData[i]
+
+      console.log('newitem', newItem)
 
       console.log(
         `\n📤 Processing ${contentType} ${i + 1}/${mappedData.length}`
@@ -238,7 +243,7 @@ const main = async () => {
 
 // Run main function if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main()
+  // main()
 }
 
 // export default {
@@ -252,13 +257,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 // await migrateData('categories', 'test')
 // await migrateData('categories', 'batch')
-await migrateData('categories', 'all')
+// await migrateData('categories', 'all')
 // await migrateData('categories', 'custom')
 
 // await migrateData('users', 'test')
-// await migrateData('users', 'test')
-// await migrateData('users', 'test')
-// await migrateData('users', 'test')
+// await migrateData('users', 'batch')
+// await migrateData('users', 'all')
+// await migrateData('users', 'custom')
+
+await migrateData('articles', 'test')
+// await migrateData('articles', 'batch')
+// await migrateData('articles', 'all')
+// await migrateData('articles', 'custom')
 
 // await migrateData('sponsors', 'test')
 // await migrateData('articles', 'test')

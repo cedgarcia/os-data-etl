@@ -52,7 +52,7 @@ const queries = {
       WHERE c.id = 27423
     `,
     batch: `
-      SELECT TOP 5 c.*, cv.subverticalid, cv.verticalid
+      SELECT TOP 1 c.*, cv.subverticalid, cv.verticalid
       FROM contents c
       INNER JOIN contents_vertical cv ON c.id = cv.contentid
     `,
