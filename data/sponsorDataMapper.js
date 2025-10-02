@@ -6,6 +6,18 @@ export const mapSponsor = (old) => {
     name: old.name,
     description: old.description,
     link: old.link,
+    refs: [
+      {
+        model: 'addedBy',
+        id: '689d5cd6fc81210002e29e29#0005',
+        modelId: 'users',
+      },
+      {
+        model: 'updatedBy',
+        id: '689d5cd6fc81210002e29e29#0005',
+        modelId: 'users',
+      },
+    ],
   }
 }
 
