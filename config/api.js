@@ -10,16 +10,22 @@ const apiConfig = {
   },
 
   endpoints: {
-    //users - contributors
+    // users - contributors
     users: '/api/users/',
-    //contents
+    // contents
     contents: '/api/contents/',
-    //categories
+    // categories
     categories: '/api/categories/',
-    //sponsors
+    // sponsors
     sponsors: '/api/management-items/',
-    //media files
+    // media files
     mediaFiles: '/api/media-files/',
+    // websites
+    websites: '/api/websites/',
+    // leagues
+    leagues: '/api/leagues/',
+    // roles
+    roles: '/api/roles/',
   },
 }
 
