@@ -128,6 +128,7 @@ const postData = async (contentType, oldItem, newItem) => {
 }
 
 // Main migration function
+// Main migration function
 export const migrateData = async (contentType, queryType = 'test') => {
   try {
     console.log(`\n🚀 Starting migration for ${contentType} (${queryType})`)
@@ -140,49 +141,74 @@ export const migrateData = async (contentType, queryType = 'test') => {
       return
     }
 
-    // Map data to new format
-    const mappedData = await mapData(contentType, oldData)
-    console.log(`🔄 Mapped ${mappedData.length} items`, mappedData)
+    // Map data to new format and upload images in parallel
+    const mappedDataPromises = oldData.map(async (oldItem, index) => {
+      try {
+        const newItem = await mapData(contentType, [oldItem])
+        return { oldItem, newItem: newItem[0] } // Return both old and new data
+      } catch (error) {
+        console.error(
+          `❌ Failed to map ${contentType} item ${index + 1}:`,
+          error.message
+        )
+        return { oldItem, error: error.message }
+      }
+    })
 
-    // Post data to Webiny
+    const mappedResults = await Promise.all(mappedDataPromises)
+    console.log(`🔄 Mapped ${mappedResults.length} items`)
+
+    // Post data to Webiny in parallel with controlled concurrency
     let successCount = 0
     let errorCount = 0
 
-    for (let i = 0; i < mappedData.length; i++) {
-      const oldItem = oldData[i]
-      const newItem = mappedData[i]
+    // Process in batches to avoid overwhelming the API
+    const batchSize = 5 // Adjust based on API rate limits
+    for (let i = 0; i < mappedResults.length; i += batchSize) {
+      const batch = mappedResults.slice(i, i + batchSize)
+      console.log(`\n📤 Processing ${contentType} batch ${i / batchSize + 1}`)
 
-      console.log('newitem', newItem)
+      const postPromises = batch.map(
+        async ({ oldItem, newItem, error }, index) => {
+          if (error) {
+            console.error(
+              `❌ Skipping item ${i + index + 1} due to mapping error: ${error}`
+            )
+            return { success: false, error }
+          }
 
-      console.log(
-        `\n📤 Processing ${contentType} ${i + 1}/${mappedData.length}`
+          try {
+            const result = await postData(contentType, oldItem, newItem)
+            if (result) {
+              console.log(
+                `✅ Successfully migrated ${contentType} item ${i + index + 1}`
+              )
+              return { success: true }
+            }
+          } catch (error) {
+            console.error(
+              `❌ Failed to migrate ${contentType} item ${i + index + 1}:`,
+              error.message
+            )
+            return { success: false, error: error.message }
+          }
+        }
       )
 
-      try {
-        const result = await postData(contentType, oldItem, newItem)
-        if (result) {
-          successCount++
-          console.log(`✅ Successfully migrated ${contentType} item ${i + 1}`)
-        }
-      } catch (error) {
-        errorCount++
-        console.error(
-          `❌ Failed to migrate ${contentType} item ${i + 1}:`,
-          error.message
-        )
-        // Continue with next item
-      }
+      const results = await Promise.all(postPromises)
+      successCount += results.filter((r) => r.success).length
+      errorCount += results.filter((r) => !r.success).length
 
-      // Small delay to avoid overwhelming the API
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      // Delay between batches to respect API rate limits
+      await new Promise((resolve) => setTimeout(resolve, 500))
     }
 
     console.log(`\n🎉 ${contentType} migration completed!`)
     console.log(`✅ Success: ${successCount}`)
     console.log(`❌ Errors: ${errorCount}`)
-    console.log(`📊 Total: ${mappedData.length}`)
+    console.log(`📊 Total: ${mappedResults.length}`)
 
-    return { successCount, errorCount, total: mappedData.length }
+    return { successCount, errorCount, total: mappedResults.length }
   } catch (error) {
     console.error(`💥 Migration failed for ${contentType}:`, error)
     throw error
@@ -220,15 +246,16 @@ const main = async () => {
         .join(', ')
     )
 
+    // Pre-upload images for articles
+    console.log('📸 Pre-uploading images...')
+    await migrateImages()
+
     // Define your migration sequence here
     const migrationPlan = [
       { contentType: 'categories', queryType: 'test' },
       { contentType: 'users', queryType: 'test' },
       { contentType: 'sponsors', queryType: 'test' },
       { contentType: 'articles', queryType: 'test' },
-      // { contentType: 'categories', queryType: 'all' },
-      // { contentType: 'users', queryType: 'all' },
-      // Add more as needed
     ]
 
     const results = await migrateBatch(migrationPlan)
@@ -240,10 +267,9 @@ const main = async () => {
     process.exit(1)
   }
 }
-
 // Run main function if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  // main()
+  main()
 }
 
 // export default {
@@ -265,8 +291,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 // await migrateData('users', 'all')
 // await migrateData('users', 'custom')
 
-await migrateData('articles', 'test')
-// await migrateData('articles', 'batch')
+// await migrateData('articles', 'test')
+await migrateData('articles', 'batch')
 // await migrateData('articles', 'all')
 // await migrateData('articles', 'custom')
 

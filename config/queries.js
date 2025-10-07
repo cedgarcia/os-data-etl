@@ -44,28 +44,50 @@ const queries = {
    * - Sports Life: 27000, 26894
    * - Videos: 26844, 26845
    */
+
+  /**
+   * 
+   * SELECT TOP 10 c.*, cv.subverticalid, cv.verticalid
+FROM contents c
+INNER JOIN contents_vertical cv ON c.id = cv.contentid
+WHERE cv.verticalid = 7 
+;
+   */
+
+  // 8158
   articles: {
     test: ` 
-      SELECT c.*, cv.subverticalid, cv.verticalid
+     SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c
       LEFT JOIN contents_vertical cv ON c.id = cv.contentid
-      WHERE c.id = 27423
+      WHERE c.id in (8156, 8171 ,8157,8159)
+
     `,
     batch: `
-      SELECT TOP 1 c.*, cv.subverticalid, cv.verticalid
-      FROM contents c
-      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+SELECT DISTINCT c.*, cv.subverticalid, cv.verticalid
+FROM contents c
+INNER JOIN contents_vertical cv ON c.id = cv.contentid
+WHERE cv.verticalid = 7
+ORDER BY c.id
+OFFSET 30 ROWS FETCH NEXT 30 ROWS ONLY
+
+
+
     `,
     all: `
-      SELECT c.*, cv.subverticalid, cv.verticalid
-      FROM contents c
-      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+SELECT c.*, cv.subverticalid, cv.verticalid
+FROM contents c
+INNER JOIN contents_vertical cv ON c.id = cv.contentid
+WHERE cv.verticalid = 7
+ORDER BY c.id
+OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+
     `,
     custom: `
       SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c
       INNER JOIN contents_vertical cv ON c.id = cv.contentid
-      WHERE c.id IN (26701, 27247, 22322, 27000, 26844)
+      WHERE c.id IN (35695, 27247, 22322, 27000, 26844)
     `,
   },
 }

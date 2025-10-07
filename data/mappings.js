@@ -16,11 +16,12 @@ export const categoryMap = {
 
   //old(from mssql) : new(webiny)
   // 2: '68b51b6592a5a100023bd2e9#0001', // NEWS
-  2: '68dca41a929a4f000218a1a0#0004', // NEWS
-  16: '68dccac3b59a9e0002210b56#0003', // EDITORIAL
-  17: '68dcce2bd4caab0002be163c#0002', // FEATURES
-  18: '68dccb31e7e1750002cec968#0003', // SPORTS LIFE
-  19: '68dccb5cb59a9e0002210b57#0003', // VIDEOS
+  2: '68dca41a929a4f000218a1a0#0015', // NEWS
+
+  16: '68dccac3b59a9e0002210b56#0012', // EDITORIAL
+  17: '68dcce2bd4caab0002be163c#0012', // FEATURES
+  18: '68dccb31e7e1750002cec968#0012', // SPORTS LIFE
+  19: '68dccb5cb59a9e0002210b57#0014', // VIDEOS
 }
 // mapping old MSSQL league IDs to Webiny IDs
 export const leagueMap = {
@@ -37,12 +38,12 @@ export const leagueMap = {
    */
 
   //old(from mssql) : new(webiny)
-  6: '68dca4b464208e0002f181fb#0006', // GILAS
-  7: '68dca4e8929a4f000218a1a6#0008', // MORE SPORTS
-  9: '68dca2f49397b000020c1204#0010', // PBA
-  10: '68dccd1be05b0600021fce34#0003', // PVL
-  11: '68dccc13e7e1750002cec969#0004', // UAAP
-  16: '68dccc3de7e1750002cec96a#0004', // ESPORTS
+  6: '68dca4b464208e0002f181fb#0021', // GILAS
+  7: '68dca4e8929a4f000218a1a6#0026', // MORE SPORTS
+  9: '68dca2f49397b000020c1204#0025', // PBA
+  10: '68dccd1be05b0600021fce34#0020', // PVL
+  11: '68dccc13e7e1750002cec969#0023', // UAAP
+  16: '68dccc3de7e1750002cec96a#0020', // ESPORTS
 }
 
 // mapping old MSSQL authors/contributors IDs to Webiny IDs

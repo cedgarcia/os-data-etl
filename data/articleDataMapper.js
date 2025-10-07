@@ -1,21 +1,30 @@
-// import { getMediaFileId } from '../utils/imageMappingHelper.js'
 import { websiteMap, leagueMap, categoryMap, statusMap } from './mappings.js'
 import { cleanArticleBody } from '../utils/cleanArticleBody.js'
+import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
 
-import { uploadToWebiny } from '../imageDownloader.js'
 export async function mapArticle(oldArticle) {
-  // Get the media file ID from the mapping
-  // const mediaFileId = oldArticle.image ? getMediaFileId(oldArticle.image) : null
+  let mediaFileId = null
 
-  // if (oldArticle.image && !mediaFileId) {
-  //   console.warn(
-  //     `⚠️  Article ${oldArticle.id}: Image "${oldArticle.image}" not found in mapping`
-  //   )
-  // } else if (mediaFileId) {
-  //   console.log(`✅ Article ${oldArticle.id}: Mapped image to ${mediaFileId}`)
-  // }
+  // Check if image is already uploaded
+  if (oldArticle.image) {
+    const decodedFileName = decodeURIComponent(oldArticle.image)
+    mediaFileId = getMediaFileIdByFilename(decodedFileName)
 
-  const res = await uploadToWebiny(oldArticle.image, oldArticle.caption)
+    if (!mediaFileId) {
+      // Upload image if not already uploaded
+      let caption = oldArticle.caption
+
+      if (!caption || typeof caption !== 'string' || caption.trim() === ' ') {
+        caption = '' // or use oldArticle.title as fallback
+      } else {
+        caption = caption.trim()
+      }
+
+      const res = await uploadToWebiny(oldArticle.image, caption)
+      mediaFileId = res.mediaFileId
+    }
+  }
+
   return {
     title: oldArticle.title || '',
     lede: oldArticle.description || '',
@@ -23,25 +32,17 @@ export async function mapArticle(oldArticle) {
     type: 'story',
     status: 'publish',
     slug: oldArticle.slug || '',
-
-    // Map the media file ID
-    mediaFileId: res.mediaFileId,
-
-    // Map other relationships
+    mediaFileId: mediaFileId || null,
     addedById: '689d5cd6fc81210002e29e29#0005',
-    categoryId: categoryMap[oldArticle.category],
-    leagueId: leagueMap[oldArticle.subverticalid],
-    websiteId: websiteMap[oldArticle.verticalid],
-
-    // Additional fields
+    categoryId: categoryMap[oldArticle.category] || null,
+    leagueId: leagueMap[oldArticle.subverticalid] || null,
+    websiteId: websiteMap[oldArticle.verticalid] || null,
     contentBlock: oldArticle.contentBlock || null,
     body: oldArticle.body || null,
     settings: oldArticle.settings || null,
-
-    // Timestamps
     publishedAt: oldArticle.published_at || null,
     author: {
-      name: oldArticle.author,
+      name: oldArticle.author || '',
     },
   }
 }
