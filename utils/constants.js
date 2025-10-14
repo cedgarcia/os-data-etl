@@ -43,8 +43,3 @@ export const createMigrationSummary = () => ({
   errors: [],
 })
 
-// Default delay configurations (in milliseconds)
-export const DELAYS = {
-  BETWEEN_ITEMS: 100, // Delay between individual items
-  BETWEEN_BATCHES: 1000, // Delay between different content types
-}

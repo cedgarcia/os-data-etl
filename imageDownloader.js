@@ -59,7 +59,7 @@ export async function downloadImageBuffer(fileName) {
 export async function uploadToWebiny(
   fileName,
   caption = '',
-  addedById = '689d5cd6fc81210002e29e29#0005'
+  addedById = '68ecba72ffef4e0002407de1#0002'
 ) {
   try {
     console.log(`📤 Uploading: ${fileName}`)

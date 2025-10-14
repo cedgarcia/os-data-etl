@@ -4,7 +4,140 @@ import config from './config/index.js'
 import { mapArticle, mapCategory, mapSponsor, mapUser } from './data/index.js'
 import { CONTENT_CONFIGS } from './utils/constants.js'
 
-// Base private function for API calls
+// ============================================
+// LOGGING FUNCTIONS FOR SPONSORS
+// ============================================
+
+// Log successful sponsor migration
+const logSuccessSponsor = async (oldItem, webinyData) => {
+  const connectionString = config.database.connectionString
+
+  const query = `
+    INSERT INTO success_migration_sponsors 
+    (id, name, logo, link, description, status, webinyid, photodark, photolight)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name,
+    oldItem.logo,
+    oldItem.link,
+    oldItem.description,
+    oldItem.status,
+    webinyData.id || null,
+    webinyData.photoDark || null,
+    webinyData.photoDark || null, // photolight same as photoDark
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log success for sponsor ${oldItem.id}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `✅ Logged successful migration for sponsor ${oldItem.id} (${oldItem.name})`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// Log failed sponsor migration
+const logFailedSponsor = async (oldItem, errorMsg) => {
+  const connectionString = config.database.connectionString
+
+  const query = `
+    INSERT INTO failed_migration_sponsors 
+    (id, name, logo, link, description, status, updater, updated, creator, created, error)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name,
+    oldItem.logo,
+    oldItem.link,
+    oldItem.description,
+    oldItem.status,
+    oldItem.updater || null,
+    oldItem.updated || null,
+    oldItem.creator || null,
+    oldItem.created || null,
+    errorMsg,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log error for sponsor ${oldItem.id}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `📝 Logged failed migration for sponsor ${oldItem.id}: ${errorMsg}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// ============================================
+// EXISTING LOGGING FUNCTION FOR ARTICLES
+// ============================================
+
+const logFailure = async (oldItem, errorMsg) => {
+  const connectionString = config.database.connectionString
+
+  const columns = [
+    'id', 'parent', 'type', 'title', 'description', 'intro', 'blurb',
+    'keywords', 'redirect', 'url', 'body', 'thumbnail', 'image', 'banner',
+    'caption', 'post', 'expiry', 'author', 'sequence', 'visible', 'target',
+    'status', 'category', 'static', 'video', 'permalink', 'audiolink',
+    'videolink', 'icon', 'active', 'sponsorid', 'contributor', 'created',
+    'creator', 'uploaded', 'uploader', 'updated', 'updater', 'channelid',
+    'sectionid', 'videotype', 'videoid', 'planid', 'allowsearch',
+    'subscribertypeid', 'autoplay', 'showinpromo', 'ogimage', 'ogthumbnail',
+    'slug', 'displayonhomepage', 'hideadvertisement', 'carousel',
+    'carouselsequence', 'columnid', 'error_message',
+  ]
+
+  const placeholders = columns.map(() => '?').join(', ')
+  const query = `INSERT INTO failedarticles (${columns.join(', ')}) VALUES (${placeholders})`
+
+  const params = columns.slice(0, -1).map((col) => oldItem[col] ?? null)
+  params.push(errorMsg)
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log article ${oldItem.id} to failedarticles:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `📝 Logged failed article ${oldItem.id} to failedarticles: ${errorMsg}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// ============================================
+// BASE API FUNCTIONS
+// ============================================
+
 const postToWebiny = async (oldData, newData, endpoint) => {
   if (!endpoint || !config.api.endpoints[endpoint]) {
     throw new Error(
@@ -33,7 +166,6 @@ const postToWebiny = async (oldData, newData, endpoint) => {
   }
 }
 
-// Specific functions for each endpoint
 export const postContent = async (oldData, newData) => {
   return postToWebiny(oldData, newData, 'contents')
 }
@@ -50,8 +182,49 @@ export const postUser = async (oldData, newData) => {
   return postToWebiny(oldData, newData, 'users')
 }
 
-// Database query function
-const readDatabaseQuery = async (contentType, queryType = 'test') => {
+// ============================================
+// DATABASE QUERY FUNCTIONS
+// ============================================
+
+const getTotalCount = async (contentType) => {
+  try {
+    const connectionString = config.database.connectionString
+
+    let countQuery
+    if (contentType === 'articles') {
+      countQuery = `
+        SELECT COUNT(DISTINCT c.id) as total
+        FROM contents c
+        INNER JOIN contents_vertical cv ON c.id = cv.contentid
+        WHERE cv.verticalid = 7
+      `
+    } else if (contentType === 'sponsors') {
+      countQuery = `SELECT COUNT(*) as total FROM sponsor`
+    } else {
+      countQuery = `SELECT COUNT(*) as total FROM ${contentType}`
+    }
+
+    return new Promise((resolve, reject) => {
+      sql.query(connectionString, countQuery, (err, results) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(results[0].total)
+        }
+      })
+    })
+  } catch (error) {
+    console.error('Count query error:', error)
+    throw error
+  }
+}
+
+const readDatabaseQuery = async (
+  contentType,
+  queryType = 'test',
+  offset = 0,
+  limit = 10
+) => {
   try {
     const connectionString = config.database.connectionString
     const queryConfig = config.queries[contentType]
@@ -68,8 +241,20 @@ const readDatabaseQuery = async (contentType, queryType = 'test') => {
       )
     }
 
-    const query = queryConfig[queryType]
-    console.log('📊 Executing query:', contentType, queryType)
+    let query = queryConfig[queryType]
+
+    if (queryType === 'batch' || queryType === 'all') {
+      query = query
+        .replace(/OFFSET\s+\d+\s+ROWS/i, `OFFSET ${offset} ROWS`)
+        .replace(
+          /FETCH\s+NEXT\s+\d+\s+ROWS\s+ONLY/i,
+          `FETCH NEXT ${limit} ROWS ONLY`
+        )
+    }
+
+    console.log(
+      `📊 Executing query: ${contentType} ${queryType} (offset: ${offset}, limit: ${limit})`
+    )
 
     return new Promise((resolve, reject) => {
       sql.query(connectionString, query, (err, results) => {
@@ -86,29 +271,29 @@ const readDatabaseQuery = async (contentType, queryType = 'test') => {
   }
 }
 
-// Data mapping function
+// ============================================
+// DATA MAPPING AND POSTING
+// ============================================
+
 const mapData = async (contentType, data) => {
   switch (contentType) {
     case 'articles':
       const list = await Promise.all(data.map(async (item) => mapArticle(item)))
-
       console.log('list:', list)
       return list
     case 'categories':
-      return await data.map((item) => mapCategory(item))
+      return await Promise.all(data.map(async (item) => mapCategory(item)))
     case 'sponsors':
-      return await data.map((item) => mapSponsor(item))
+      return await Promise.all(data.map(async (item) => mapSponsor(item)))
     case 'users':
-      return await data.map((item) => mapUser(item))
+      return await Promise.all(data.map(async (item) => mapUser(item)))
     case 'websites':
-      // Add website mapping if needed
       return data
     default:
       throw new Error(`No mapper found for ${contentType}`)
   }
 }
 
-// Post data based on content type
 const postData = async (contentType, oldItem, newItem) => {
   switch (contentType) {
     case 'articles':
@@ -127,115 +312,249 @@ const postData = async (contentType, oldItem, newItem) => {
   }
 }
 
-// Main migration function
-// Main migration function
-export const migrateData = async (contentType, queryType = 'test') => {
+// ============================================
+// PROCESS BATCH WITH LOGGING
+// ============================================
+
+const processBatch = async (contentType, oldData) => {
+  let successCount = 0
+  let errorCount = 0
+
+  // Map data
+  const mappedDataPromises = oldData.map(async (oldItem, index) => {
+    try {
+      const newItem = await mapData(contentType, [oldItem])
+      return { oldItem, newItem: newItem[0] }
+    } catch (error) {
+      console.error(
+        `❌ Failed to map ${contentType} item ${index + 1}:`,
+        error.message
+      )
+      
+      // Log based on content type
+      if (contentType === 'articles') {
+        await logFailure(oldItem, `Mapping error: ${error.message}`)
+      } else if (contentType === 'sponsors') {
+        await logFailedSponsor(oldItem, `Mapping error: ${error.message}`)
+      }
+      
+      return { oldItem, error: error.message }
+    }
+  })
+
+  const mappedResults = await Promise.all(mappedDataPromises)
+
+  // Post data with controlled concurrency
+  const postBatchSize = 5
+  for (let i = 0; i < mappedResults.length; i += postBatchSize) {
+    const batch = mappedResults.slice(i, i + postBatchSize)
+
+    const postPromises = batch.map(
+      async ({ oldItem, newItem, error }, index) => {
+        if (error) {
+          console.error(
+            `❌ Skipping item ${i + index + 1} due to mapping error: ${error}`
+          )
+          return { success: false, error }
+        }
+
+        try {
+          const result = await postData(contentType, oldItem, newItem)
+          if (result) {
+            console.log(
+              `✅ Successfully migrated ${contentType} item ${i + index + 1}`
+            )
+            
+            // Log success based on content type
+            if (contentType === 'sponsors') {
+              await logSuccessSponsor(oldItem, result.data || result)
+            }
+            
+            return { success: true }
+          }
+        } catch (error) {
+          console.error(
+            `❌ Failed to migrate ${contentType} item ${i + index + 1}:`,
+            error.message
+          )
+          
+          // Log failure based on content type
+          if (contentType === 'articles') {
+            await logFailure(oldItem, `Posting error: ${error.message}`)
+          } else if (contentType === 'sponsors') {
+            await logFailedSponsor(oldItem, `Posting error: ${error.message}`)
+          }
+          
+          return { success: false, error: error.message }
+        }
+      }
+    )
+
+    const results = await Promise.all(postPromises)
+    successCount += results.filter((r) => r.success).length
+    errorCount += results.filter((r) => !r.success).length
+
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  return { successCount, errorCount }
+}
+
+// ============================================
+// MAIN MIGRATION FUNCTION
+// ============================================
+
+export const migrateData = async (
+  contentType,
+  queryType = 'test',
+  options = {}
+) => {
   try {
+    const {
+      batchSize = 10,
+      maxBatches = null,
+      startOffset = 0,
+    } = options
+
     console.log(`\n🚀 Starting migration for ${contentType} (${queryType})`)
 
-    // Read data from database
-    const oldData = await readDatabaseQuery(contentType, queryType)
+    if (queryType === 'test' || queryType === 'custom') {
+      const oldData = await readDatabaseQuery(contentType, queryType)
 
-    if (oldData.length === 0) {
-      console.log('⚠️  No data found, skipping...')
-      return
-    }
-
-    // Map data to new format and upload images in parallel
-    const mappedDataPromises = oldData.map(async (oldItem, index) => {
-      try {
-        const newItem = await mapData(contentType, [oldItem])
-        return { oldItem, newItem: newItem[0] } // Return both old and new data
-      } catch (error) {
-        console.error(
-          `❌ Failed to map ${contentType} item ${index + 1}:`,
-          error.message
-        )
-        return { oldItem, error: error.message }
+      if (oldData.length === 0) {
+        console.log('⚠️  No data found, skipping...')
+        return { successCount: 0, errorCount: 0, total: 0 }
       }
-    })
 
-    const mappedResults = await Promise.all(mappedDataPromises)
-    console.log(`🔄 Mapped ${mappedResults.length} items`)
-
-    // Post data to Webiny in parallel with controlled concurrency
-    let successCount = 0
-    let errorCount = 0
-
-    // Process in batches to avoid overwhelming the API
-    const batchSize = 5 // Adjust based on API rate limits
-    for (let i = 0; i < mappedResults.length; i += batchSize) {
-      const batch = mappedResults.slice(i, i + batchSize)
-      console.log(`\n📤 Processing ${contentType} batch ${i / batchSize + 1}`)
-
-      const postPromises = batch.map(
-        async ({ oldItem, newItem, error }, index) => {
-          if (error) {
-            console.error(
-              `❌ Skipping item ${i + index + 1} due to mapping error: ${error}`
-            )
-            return { success: false, error }
-          }
-
-          try {
-            const result = await postData(contentType, oldItem, newItem)
-            if (result) {
-              console.log(
-                `✅ Successfully migrated ${contentType} item ${i + index + 1}`
-              )
-              return { success: true }
-            }
-          } catch (error) {
-            console.error(
-              `❌ Failed to migrate ${contentType} item ${i + index + 1}:`,
-              error.message
-            )
-            return { success: false, error: error.message }
-          }
-        }
+      const { successCount, errorCount } = await processBatch(
+        contentType,
+        oldData
       )
 
-      const results = await Promise.all(postPromises)
-      successCount += results.filter((r) => r.success).length
-      errorCount += results.filter((r) => !r.success).length
+      console.log(`\n🎉 ${contentType} migration completed!`)
+      console.log(`✅ Success: ${successCount}`)
+      console.log(`❌ Errors: ${errorCount}`)
+      console.log(`📊 Total: ${oldData.length}`)
 
-      // Delay between batches to respect API rate limits
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      return { successCount, errorCount, total: oldData.length }
     }
 
-    console.log(`\n🎉 ${contentType} migration completed!`)
-    console.log(`✅ Success: ${successCount}`)
-    console.log(`❌ Errors: ${errorCount}`)
-    console.log(`📊 Total: ${mappedResults.length}`)
+    console.log(`📊 Fetching total count...`)
+    const totalRecords = await getTotalCount(contentType)
+    console.log(`📊 Total records to migrate: ${totalRecords}`)
 
-    return { successCount, errorCount, total: mappedResults.length }
+    const totalBatches = Math.ceil(totalRecords / batchSize)
+    const batchesToProcess = maxBatches
+      ? Math.min(maxBatches, totalBatches)
+      : totalBatches
+
+    console.log(
+      `📦 Will process ${batchesToProcess} batches of ${batchSize} records each`
+    )
+
+    let overallSuccessCount = 0
+    let overallErrorCount = 0
+    let currentOffset = startOffset
+
+    for (let batchNum = 1; batchNum <= batchesToProcess; batchNum++) {
+      console.log(`\n${'='.repeat(60)}`)
+      console.log(
+        `📦 BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
+      )
+      console.log('='.repeat(60))
+
+      try {
+        const oldData = await readDatabaseQuery(
+          contentType,
+          queryType,
+          currentOffset,
+          batchSize
+        )
+
+        if (oldData.length === 0) {
+          console.log('⚠️  No more data, stopping...')
+          break
+        }
+
+        console.log(`📥 Fetched ${oldData.length} records`)
+
+        const { successCount, errorCount } = await processBatch(
+          contentType,
+          oldData
+        )
+
+        overallSuccessCount += successCount
+        overallErrorCount += errorCount
+
+        console.log(`\n✅ Batch ${batchNum} completed!`)
+        console.log(`  Success: ${successCount}/${oldData.length}`)
+        console.log(`  Errors: ${errorCount}/${oldData.length}`)
+        console.log(
+          `  Overall Progress: ${
+            overallSuccessCount + overallErrorCount
+          }/${totalRecords}`
+        )
+
+        currentOffset += batchSize
+
+        if (batchNum < batchesToProcess) {
+          console.log('⏳ Waiting 2 seconds before next batch...')
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+        }
+      } catch (error) {
+        console.error(`❌ Batch ${batchNum} failed:`, error.message)
+        overallErrorCount += batchSize
+        currentOffset += batchSize
+
+        console.log('⚠️  Continuing to next batch...')
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      }
+    }
+
+    console.log(`\n${'='.repeat(60)}`)
+    console.log('🎉 MIGRATION COMPLETED!')
+    console.log('='.repeat(60))
+    console.log(`✅ Total Success: ${overallSuccessCount}`)
+    console.log(`❌ Total Errors: ${overallErrorCount}`)
+    console.log(
+      `📊 Total Processed: ${overallSuccessCount + overallErrorCount}`
+    )
+    console.log(`📊 Total Available: ${totalRecords}`)
+
+    return {
+      successCount: overallSuccessCount,
+      errorCount: overallErrorCount,
+      total: overallSuccessCount + overallErrorCount,
+      totalAvailable: totalRecords,
+    }
   } catch (error) {
     console.error(`💥 Migration failed for ${contentType}:`, error)
     throw error
   }
 }
 
-// Batch migration function for multiple content types
 export const migrateBatch = async (migrations = []) => {
   const results = {}
 
   for (const migration of migrations) {
-    const { contentType, queryType } = migration
+    const { contentType, queryType, options } = migration
     try {
-      results[contentType] = await migrateData(contentType, queryType)
+      results[contentType] = await migrateData(contentType, queryType, options)
     } catch (error) {
       results[contentType] = { error: error.message }
       console.error(`Failed to migrate ${contentType}:`, error)
     }
 
-    // Delay between different content types
     await new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
   return results
 }
 
-// Main execution function
+// ============================================
+// MAIN EXECUTION
+// ============================================
+
 const main = async () => {
   try {
     console.log('🏁 Starting migration process...')
@@ -246,16 +565,16 @@ const main = async () => {
         .join(', ')
     )
 
-    // Pre-upload images for articles
-    console.log('📸 Pre-uploading images...')
-    await migrateImages()
-
-    // Define your migration sequence here
     const migrationPlan = [
-      { contentType: 'categories', queryType: 'test' },
-      { contentType: 'users', queryType: 'test' },
-      { contentType: 'sponsors', queryType: 'test' },
-      { contentType: 'articles', queryType: 'test' },
+      {
+        contentType: 'sponsors',
+        queryType: 'all',
+        options: {
+          batchSize: 10,
+          maxBatches: null,
+          startOffset: 0,
+        },
+      },
     ]
 
     const results = await migrateBatch(migrationPlan)
@@ -267,10 +586,27 @@ const main = async () => {
     process.exit(1)
   }
 }
-// Run main function if this file is executed directly
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
+
+// Examples of how to use:
+//
+// Process all articles in batches of 10:
+await migrateData('articles', 'all', { batchSize: 10, maxBatches: 2 })
+//
+
+//  await migrateData('sponsors', 'all', { batchSize: 5, maxBatches: 2 })
+
+// Test with first 50 records (5 batches of 10):
+// await migrateData('articles', 'batch', { batchSize: 10, maxBatches: 5 })
+//
+// Resume from record 100:
+// await migrateData('articles', 'all', { batchSize: 10, startOffset: 100 })
+//
+// Process single test record (no batching):
+// await migrateData('articles', 'test')
 
 // export default {
 //   postContent,
@@ -292,9 +628,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 // await migrateData('users', 'custom')
 
 // await migrateData('articles', 'test')
-await migrateData('articles', 'batch')
+// await migrateData('articles', 'batch')
 // await migrateData('articles', 'all')
 // await migrateData('articles', 'custom')
 
+
 // await migrateData('sponsors', 'test')
-// await migrateData('articles', 'test')
+// await migrateData('users', 'batch')
+// await migrateData('users', 'all')
+// await migrateData('users', 'custom')
+
+// await migrateData('sponsors', 'test')

@@ -33,7 +33,7 @@ export async function mapArticle(oldArticle) {
     status: 'publish',
     slug: oldArticle.slug || '',
     mediaFileId: mediaFileId || null,
-    addedById: '689d5cd6fc81210002e29e29#0005',
+    addedById: '68ecba72ffef4e0002407de1#0002',
     categoryId: categoryMap[oldArticle.category] || null,
     leagueId: leagueMap[oldArticle.subverticalid] || null,
     websiteId: websiteMap[oldArticle.verticalid] || null,

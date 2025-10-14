@@ -13,7 +13,17 @@ const queries = {
 
   // SPONSORS
   sponsors: {
-    test: 'SELECT * FROM sponsor WHERE id = 20',
+    test: 'SELECT * FROM sponsor WHERE id = 1',
+     batch: `
+      SELECT * FROM sponsor
+      ORDER BY id
+      OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
+    `,
+    all: `
+      SELECT * FROM sponsor
+      ORDER BY id
+      OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
+    `,
   },
 
   // CATEGORIES
@@ -64,24 +74,20 @@ WHERE cv.verticalid = 7
 
     `,
     batch: `
-SELECT DISTINCT c.*, cv.subverticalid, cv.verticalid
-FROM contents c
-INNER JOIN contents_vertical cv ON c.id = cv.contentid
-WHERE cv.verticalid = 7
-ORDER BY c.id
-OFFSET 30 ROWS FETCH NEXT 30 ROWS ONLY
-
-
-
+      SELECT DISTINCT c.*, cv.subverticalid, cv.verticalid
+      FROM contents c
+      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE cv.verticalid = 7
+      ORDER BY c.id
+      OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
     `,
     all: `
-SELECT c.*, cv.subverticalid, cv.verticalid
-FROM contents c
-INNER JOIN contents_vertical cv ON c.id = cv.contentid
-WHERE cv.verticalid = 7
-ORDER BY c.id
-OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
-
+      SELECT c.*, cv.subverticalid, cv.verticalid
+      FROM contents c
+      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE cv.verticalid = 7
+      ORDER BY c.id
+      OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
     `,
     custom: `
       SELECT c.*, cv.subverticalid, cv.verticalid
