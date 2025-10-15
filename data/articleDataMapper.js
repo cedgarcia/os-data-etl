@@ -26,6 +26,7 @@ export async function mapArticle(oldArticle) {
   }
 
   return {
+    legacyId: oldArticle.id ? String(oldArticle.id) : null, 
     title: oldArticle.title || '',
     lede: oldArticle.description || '',
     story: cleanArticleBody(oldArticle.body),

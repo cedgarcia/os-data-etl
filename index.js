@@ -5,12 +5,95 @@ import { mapArticle, mapCategory, mapSponsor, mapUser } from './data/index.js'
 import { CONTENT_CONFIGS } from './utils/constants.js'
 
 // ============================================
+// LOGGING FUNCTIONS FOR ARTICLES
+// ============================================
+
+// Log successful article migration
+const logSuccessArticle = async (oldItem, webinyData) => {
+  const connectionString = config.database.connectionString
+
+  // DEBUG: Log the entire response to see its structure
+  console.log('📋 Full Webiny Response:', JSON.stringify(webinyData, null, 2))
+
+  // PATH TO LOG THE WEBINY ID ON MSSQL
+  const webinyId = 
+    // webinyData?.data?.story?.id ||
+    webinyData?.story?.id ||
+    null
+
+  console.log(`🔍 Extracted WebinyID: ${webinyId}`)
+
+  if (!webinyId) {
+    console.warn('⚠️  Warning: No webinyId found in response!')
+  }
+
+  const query = `
+    INSERT INTO success_migration_articles 
+    (id, title, description, intro, category, slug, carouselsequence, columnid, webinyid)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.title || null,
+    oldItem.description || null,
+    oldItem.intro || null,
+    oldItem.category || null,
+    oldItem.slug || null,
+    oldItem.carouselsequence || null,
+    oldItem.columnid || null,
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log success for article ${oldItem.id}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `✅ Logged successful migration for article ${oldItem.id} (${oldItem.title}) - WebinyID: ${webinyId}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// ============================================
 // LOGGING FUNCTIONS FOR SPONSORS
 // ============================================
 
 // Log successful sponsor migration
 const logSuccessSponsor = async (oldItem, webinyData) => {
   const connectionString = config.database.connectionString
+
+  // DEBUG: Log the entire response
+  console.log('📋 Full Sponsor Response:', JSON.stringify(webinyData, null, 2))
+
+
+  const webinyId = 
+    webinyData?.id ||
+    null
+
+  // const photoDark = 
+  //   webinyData?.data?.createManagementItem?.photoDark ||
+  //   webinyData?.data?.managementItem?.photoDark ||
+  //   webinyData?.data?.photoDark ||
+  //   webinyData?.photoDark ||
+  //   null
+
+  // const photoLight = 
+  //   webinyData?.data?.createManagementItem?.photoLight ||
+  //   webinyData?.data?.managementItem?.photoLight ||
+  //   webinyData?.data?.photoLight ||
+  //   webinyData?.photoLight ||
+  //   null
+
+  console.log(`🔍 Extracted Sponsor WebinyID: ${webinyId}`)
 
   const query = `
     INSERT INTO success_migration_sponsors 
@@ -25,9 +108,9 @@ const logSuccessSponsor = async (oldItem, webinyData) => {
     oldItem.link,
     oldItem.description,
     oldItem.status,
-    webinyData.id || null,
-    webinyData.photoDark || null,
-    webinyData.photoDark || null, // photolight same as photoDark
+    webinyId,
+    photoDark,
+    photoLight,
   ]
 
   return new Promise((resolve, reject) => {
@@ -40,7 +123,7 @@ const logSuccessSponsor = async (oldItem, webinyData) => {
         reject(err)
       } else {
         console.log(
-          `✅ Logged successful migration for sponsor ${oldItem.id} (${oldItem.name})`
+          `✅ Logged successful migration for sponsor ${oldItem.id} (${oldItem.name}) - WebinyID: ${webinyId}`
         )
         resolve(results)
       }
@@ -155,7 +238,9 @@ const postToWebiny = async (oldData, newData, endpoint) => {
       headers: config.api.headers,
     })
     console.log('✅ Success:', endpoint, response.status)
-    return response.data
+    
+    // Return the full response object, not just response.data
+    return response
   } catch (error) {
     console.error(
       '❌ API Error:',
@@ -331,7 +416,6 @@ const processBatch = async (contentType, oldData) => {
         error.message
       )
       
-      // Log based on content type
       if (contentType === 'articles') {
         await logFailure(oldItem, `Mapping error: ${error.message}`)
       } else if (contentType === 'sponsors') {
@@ -365,9 +449,11 @@ const processBatch = async (contentType, oldData) => {
               `✅ Successfully migrated ${contentType} item ${i + index + 1}`
             )
             
-            // Log success based on content type
-            if (contentType === 'sponsors') {
-              await logSuccessSponsor(oldItem, result.data || result)
+            // Pass the entire response data, not just result.data
+            if (contentType === 'articles') {
+              await logSuccessArticle(oldItem, result.data)
+            } else if (contentType === 'sponsors') {
+              await logSuccessSponsor(oldItem, result.data)
             }
             
             return { success: true }
@@ -378,7 +464,6 @@ const processBatch = async (contentType, oldData) => {
             error.message
           )
           
-          // Log failure based on content type
           if (contentType === 'articles') {
             await logFailure(oldItem, `Posting error: ${error.message}`)
           } else if (contentType === 'sponsors') {
@@ -591,13 +676,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
 
-// Examples of how to use:
-//
-// Process all articles in batches of 10:
-await migrateData('articles', 'all', { batchSize: 10, maxBatches: 2 })
-//
+// Examples
+await migrateData('articles', 'all', { batchSize: 1, maxBatches: 1 })
 
-//  await migrateData('sponsors', 'all', { batchSize: 5, maxBatches: 2 })
+//  await migrateData('sponsors', 'all', { batchSize: 2, maxBatches: 2 })
 
 // Test with first 50 records (5 batches of 10):
 // await migrateData('articles', 'batch', { batchSize: 10, maxBatches: 5 })
