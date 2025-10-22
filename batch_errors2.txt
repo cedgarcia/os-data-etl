@@ -1,0 +1,304 @@
+[2025-10-22T04:59:29.599Z] Batch 204 returned no results
+[2025-10-22T04:59:29.609Z] Batch 205 returned no results
+[2025-10-22T04:59:29.610Z] Batch 208 returned no results
+[2025-10-22T04:59:29.611Z] Batch 207 returned no results
+[2025-10-22T04:59:29.611Z] Batch 209 returned no results
+[2025-10-22T04:59:29.612Z] Batch 206 returned no results
+[2025-10-22T04:59:29.612Z] Batch 210 returned no results
+[2025-10-22T04:59:29.613Z] Batch 211 returned no results
+[2025-10-22T04:59:29.613Z] Batch 214 returned no results
+[2025-10-22T04:59:29.614Z] Batch 212 returned no results
+[2025-10-22T04:59:29.615Z] Batch 213 returned no results
+[2025-10-22T04:59:29.616Z] Batch 217 returned no results
+[2025-10-22T04:59:29.622Z] Batch 216 returned no results
+[2025-10-22T04:59:29.623Z] Batch 219 returned no results
+[2025-10-22T04:59:29.623Z] Batch 215 returned no results
+[2025-10-22T04:59:29.624Z] Batch 220 returned no results
+[2025-10-22T04:59:29.624Z] Batch 218 returned no results
+[2025-10-22T04:59:29.625Z] Batch 223 returned no results
+[2025-10-22T04:59:29.626Z] Batch 203 returned no results
+[2025-10-22T04:59:29.626Z] Batch 224 returned no results
+[2025-10-22T04:59:29.626Z] Batch 226 returned no results
+[2025-10-22T04:59:29.627Z] Batch 222 returned no results
+[2025-10-22T04:59:29.627Z] Batch 228 returned no results
+[2025-10-22T04:59:29.628Z] Batch 227 returned no results
+[2025-10-22T04:59:29.629Z] Batch 229 returned no results
+[2025-10-22T04:59:29.629Z] Batch 225 returned no results
+[2025-10-22T04:59:29.629Z] Batch 230 returned no results
+[2025-10-22T04:59:29.630Z] Batch 232 returned no results
+[2025-10-22T04:59:29.630Z] Batch 233 returned no results
+[2025-10-22T04:59:29.631Z] Batch 231 returned no results
+[2025-10-22T04:59:29.631Z] Batch 236 returned no results
+[2025-10-22T04:59:29.632Z] Batch 235 returned no results
+[2025-10-22T04:59:29.632Z] Batch 234 returned no results
+[2025-10-22T04:59:29.633Z] Batch 221 returned no results
+[2025-10-22T04:59:29.633Z] Batch 238 returned no results
+[2025-10-22T04:59:29.634Z] Batch 239 returned no results
+[2025-10-22T04:59:29.635Z] Batch 240 returned no results
+[2025-10-22T04:59:29.635Z] Batch 242 returned no results
+[2025-10-22T04:59:29.635Z] Batch 243 returned no results
+[2025-10-22T04:59:29.636Z] Batch 237 returned no results
+[2025-10-22T04:59:29.636Z] Batch 244 returned no results
+[2025-10-22T04:59:29.637Z] Batch 245 returned no results
+[2025-10-22T04:59:29.637Z] Batch 241 returned no results
+[2025-10-22T04:59:29.638Z] Batch 246 returned no results
+[2025-10-22T04:59:29.639Z] Batch 247 returned no results
+[2025-10-22T04:59:29.640Z] Batch 251 returned no results
+[2025-10-22T04:59:29.641Z] Batch 249 returned no results
+[2025-10-22T04:59:29.641Z] Batch 248 returned no results
+[2025-10-22T04:59:29.642Z] Batch 253 returned no results
+[2025-10-22T04:59:29.642Z] Batch 250 returned no results
+[2025-10-22T04:59:29.643Z] Batch 255 returned no results
+[2025-10-22T04:59:29.644Z] Batch 254 returned no results
+[2025-10-22T04:59:29.644Z] Batch 258 returned no results
+[2025-10-22T04:59:29.645Z] Batch 252 returned no results
+[2025-10-22T04:59:29.645Z] Batch 257 returned no results
+[2025-10-22T04:59:29.646Z] Batch 256 returned no results
+[2025-10-22T04:59:29.646Z] Batch 261 returned no results
+[2025-10-22T04:59:29.647Z] Batch 259 returned no results
+[2025-10-22T04:59:29.648Z] Batch 262 returned no results
+[2025-10-22T04:59:29.648Z] Batch 263 returned no results
+[2025-10-22T04:59:29.649Z] Batch 264 returned no results
+[2025-10-22T04:59:29.650Z] Batch 267 returned no results
+[2025-10-22T04:59:29.650Z] Batch 265 returned no results
+[2025-10-22T04:59:29.651Z] Batch 260 returned no results
+[2025-10-22T04:59:29.652Z] Batch 266 returned no results
+[2025-10-22T04:59:29.653Z] Batch 271 returned no results
+[2025-10-22T04:59:29.654Z] Batch 269 returned no results
+[2025-10-22T04:59:29.654Z] Batch 274 returned no results
+[2025-10-22T04:59:29.655Z] Batch 270 returned no results
+[2025-10-22T04:59:29.656Z] Batch 268 returned no results
+[2025-10-22T04:59:29.657Z] Batch 275 returned no results
+[2025-10-22T04:59:29.657Z] Batch 273 returned no results
+[2025-10-22T04:59:29.658Z] Batch 272 returned no results
+[2025-10-22T04:59:29.658Z] Batch 276 returned no results
+[2025-10-22T04:59:29.659Z] Batch 278 returned no results
+[2025-10-22T04:59:29.659Z] Batch 283 returned no results
+[2025-10-22T04:59:29.660Z] Batch 277 returned no results
+[2025-10-22T04:59:29.660Z] Batch 279 returned no results
+[2025-10-22T04:59:29.661Z] Batch 281 returned no results
+[2025-10-22T04:59:29.661Z] Batch 282 returned no results
+[2025-10-22T04:59:29.662Z] Batch 284 returned no results
+[2025-10-22T04:59:29.662Z] Batch 280 returned no results
+[2025-10-22T04:59:29.663Z] Batch 287 returned no results
+[2025-10-22T04:59:29.663Z] Batch 288 returned no results
+[2025-10-22T04:59:29.670Z] Batch 285 returned no results
+[2025-10-22T04:59:29.670Z] Batch 291 returned no results
+[2025-10-22T04:59:29.671Z] Batch 290 returned no results
+[2025-10-22T04:59:29.672Z] Batch 289 returned no results
+[2025-10-22T04:59:29.672Z] Batch 293 returned no results
+[2025-10-22T04:59:29.673Z] Batch 295 returned no results
+[2025-10-22T04:59:29.673Z] Batch 292 returned no results
+[2025-10-22T04:59:29.674Z] Batch 294 returned no results
+[2025-10-22T04:59:29.674Z] Batch 299 returned no results
+[2025-10-22T04:59:29.674Z] Batch 286 returned no results
+[2025-10-22T04:59:29.675Z] Batch 296 returned no results
+[2025-10-22T04:59:29.694Z] Batch 0 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.700Z] Batch 3 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.707Z] Batch 2 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.711Z] Batch 1 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.717Z] Batch 5 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.723Z] Batch 6 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.727Z] Batch 7 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.732Z] Batch 4 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.738Z] Batch 10 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.744Z] Batch 8 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.748Z] Batch 11 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.752Z] Batch 15 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.759Z] Batch 14 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.779Z] Batch 9 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.785Z] Batch 202 summary: 91 valid images, 0 invalid images
+[2025-10-22T04:59:29.793Z] Batch 13 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.801Z] Batch 17 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.811Z] Batch 19 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.818Z] Batch 16 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.822Z] Batch 12 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.830Z] Batch 21 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.834Z] Batch 18 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.840Z] Batch 20 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.849Z] Batch 25 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.854Z] Batch 22 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.860Z] Batch 23 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.876Z] Batch 24 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.880Z] Batch 27 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.885Z] Batch 26 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.891Z] Batch 31 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.897Z] Batch 30 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.902Z] Batch 29 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.907Z] Batch 28 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.912Z] Batch 35 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.927Z] Batch 33 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.931Z] Batch 39 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.936Z] Batch 32 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.941Z] Batch 38 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.950Z] Batch 34 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.960Z] Batch 41 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.970Z] Batch 36 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.982Z] Batch 37 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.986Z] Batch 42 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.993Z] Batch 43 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:29.998Z] Batch 40 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.002Z] Batch 44 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.007Z] Batch 47 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.027Z] Batch 48 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.033Z] Batch 45 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.042Z] Batch 46 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.050Z] Batch 49 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.063Z] Batch 51 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.084Z] Batch 54 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.092Z] Batch 50 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.103Z] Batch 52 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.111Z] Batch 55 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.116Z] Batch 59 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.184Z] Batch 58 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.220Z] Batch 53 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.244Z] Batch 56 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.250Z] Batch 60 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.256Z] Batch 57 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.266Z] Batch 63 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.270Z] Batch 61 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.277Z] Batch 62 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.282Z] Batch 64 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.289Z] Batch 65 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.295Z] Batch 66 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.300Z] Batch 68 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.304Z] Batch 71 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.314Z] Batch 69 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.336Z] Batch 67 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.340Z] Batch 73 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.345Z] Batch 74 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.349Z] Batch 75 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.353Z] Batch 76 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.358Z] Batch 70 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.364Z] Batch 72 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.368Z] Batch 83 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.372Z] Batch 77 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.378Z] Batch 78 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.399Z] Batch 79 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.404Z] Batch 81 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.410Z] Batch 82 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.419Z] Batch 80 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.424Z] Batch 87 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.430Z] Batch 85 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.433Z] Batch 84 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.438Z] Batch 86 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.443Z] Batch 90 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.448Z] Batch 91 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.482Z] Batch 89 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.491Z] Batch 95 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.498Z] Batch 94 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.502Z] Batch 93 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.509Z] Batch 88 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.520Z] Batch 92 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.528Z] Batch 98 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.533Z] Batch 96 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.537Z] Batch 99 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.544Z] Batch 97 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.551Z] Batch 103 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.561Z] Batch 100 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.568Z] Batch 102 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.595Z] Batch 107 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.604Z] Batch 101 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.620Z] Batch 106 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.628Z] Batch 105 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.633Z] Batch 108 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.651Z] Batch 104 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.660Z] Batch 111 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.665Z] Batch 112 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.669Z] Batch 110 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.675Z] Batch 113 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.681Z] Batch 109 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.686Z] Batch 115 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.692Z] Batch 114 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.711Z] Batch 119 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.715Z] Batch 118 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.719Z] Batch 117 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.729Z] Batch 116 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.734Z] Batch 120 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.748Z] Batch 123 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.765Z] Batch 121 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.769Z] Batch 127 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.776Z] Batch 124 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.784Z] Batch 125 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.799Z] Batch 122 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.829Z] Batch 129 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.836Z] Batch 128 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.845Z] Batch 130 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.851Z] Batch 133 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.857Z] Batch 131 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.869Z] Batch 132 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.887Z] Batch 136 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.895Z] Batch 139 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.899Z] Batch 135 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.907Z] Batch 126 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.914Z] Batch 134 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.932Z] Batch 137 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.938Z] Batch 138 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.946Z] Batch 141 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.950Z] Batch 140 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.964Z] Batch 142 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.981Z] Batch 143 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.986Z] Batch 147 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.991Z] Batch 145 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:30.999Z] Batch 144 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.005Z] Batch 146 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.021Z] Batch 151 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.030Z] Batch 149 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.034Z] Batch 148 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.041Z] Batch 155 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.046Z] Batch 152 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.058Z] Batch 150 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.064Z] Batch 154 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.069Z] Batch 158 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.076Z] Batch 153 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.080Z] Batch 157 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.085Z] Batch 156 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.092Z] Batch 161 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.096Z] Batch 159 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.115Z] Batch 160 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.121Z] Batch 163 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.130Z] Batch 165 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.137Z] Batch 162 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.148Z] Batch 164 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.152Z] Batch 168 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.162Z] Batch 167 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.182Z] Batch 169 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.187Z] Batch 166 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.196Z] Batch 170 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.200Z] Batch 173 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.211Z] Batch 171 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.218Z] Batch 172 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.236Z] Batch 174 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.243Z] Batch 175 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.249Z] Batch 176 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.257Z] Batch 178 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.264Z] Batch 179 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.269Z] Batch 177 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.273Z] Batch 181 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.287Z] Batch 180 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.302Z] Batch 185 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.306Z] Batch 182 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.314Z] Batch 183 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.318Z] Batch 184 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.325Z] Batch 188 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.330Z] Batch 186 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.347Z] Batch 189 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.352Z] Batch 190 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.359Z] Batch 187 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.365Z] Batch 193 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.371Z] Batch 195 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.378Z] Batch 191 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.383Z] Batch 194 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.414Z] Batch 197 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.436Z] Batch 192 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.465Z] Batch 196 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.480Z] Batch 201 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.502Z] Batch 198 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.513Z] Batch 200 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.532Z] Batch 199 summary: 100 valid images, 0 invalid images
+[2025-10-22T04:59:31.547Z] Batch 298 returned no results
+[2025-10-22T04:59:31.549Z] Batch 297 returned no results
+[2025-10-22T04:59:31.553Z] Total valid images: 20291, Total invalid images: 0, Unique images: 20291
+[2025-10-22T05:01:18.746Z] Failed to download 423735841_414536994392471_5023814596291514613_n: Request failed with status code 404
+[2025-10-22T05:02:27.073Z] Failed to download AVC ALAS Group: Request failed with status code 404
+[2025-10-22T05:07:59.403Z] Final summary: 20291 valid images processed, 20291 unique images, 20289 files downloaded

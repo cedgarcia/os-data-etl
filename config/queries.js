@@ -14,7 +14,7 @@ const queries = {
   // SPONSORS
   sponsors: {
     test: 'SELECT * FROM sponsor WHERE id = 1',
-     batch: `
+    batch: `
       SELECT * FROM sponsor
       ORDER BY id
       OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
@@ -26,11 +26,18 @@ const queries = {
     `,
   },
 
+  // LEAGUES
+  leagues: {
+    test: 'SELECT * FROM subvertical WHERE id = 6',
+    batch: 'SELECT TOP 10 * FROM subvertical',
+    all: 'SELECT * FROM vertical_subvertical where verticalid = 7',
+  },
+
   // CATEGORIES
   categories: {
     test: 'SELECT * FROM category WHERE id = 1',
     batch: 'SELECT TOP 10 * FROM category',
-    all: 'SELECT * FROM category',
+    all: 'SELECT * FROM category', // NEWS, EDITORIAL, FEATURES, SPORTS LIFE/LIFESTYLE, VIDEOS
     custom: 'SELECT * FROM category WHERE id IN (2, 16, 17, 18, 19)', // NEWS, EDITORIAL, FEATURES, SPORTS LIFE/LIFESTYLE, VIDEOS
   },
 
@@ -86,9 +93,13 @@ WHERE cv.verticalid = 7
       FROM contents c
       INNER JOIN contents_vertical cv ON c.id = cv.contentid
       WHERE cv.verticalid = 7
+      AND c.type = 4
+      AND c.status = 'Published'
       ORDER BY c.id
       OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
     `,
+    //     all: `SELECT  distinct c.*, cv.subverticalid, cv.verticalid FROM contents c INNER JOIN contents_vertical cv ON c.id = cv.contentid WHERE cv.verticalid = 7 and type = 4 and status = 'Published' ORDER BY c.id
+    // `,
     custom: `
       SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c

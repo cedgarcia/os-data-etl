@@ -6,7 +6,7 @@ export const mapUser = (old) => {
   // SINCE EMAIL DOESNT EXIST CREATE SAMPLE EMAIL TO MIGRATE THINGS
   const email =
     old.email ||
-    `${cleanFirstname.toLowerCase()}.${cleanLastname.toLowerCase()}@sample.com`
+    `${cleanFirstname.toLowerCase()}.${cleanLastname.toLowerCase()}@onecms.com`
 
   return {
     firstName: old.firstname || 'N/A',

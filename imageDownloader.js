@@ -14,8 +14,8 @@ const query = `
   INNER JOIN contents_vertical cv ON c.id = cv.contentid
   WHERE cv.verticalid = 7
 `
-const folderPath = 'assets/images'
-const baseImageUrl = 'https://1cms-img.imgix.net'
+// const folderPath = 'assets/images'
+const baseImageUrl = './assets/images2'
 const IMAGE_MAPPING_FILE = 'image-mapping.json' // Store the mapping
 
 // Load existing mapping or create new one
@@ -23,10 +23,13 @@ function loadImageMapping() {
   try {
     if (fs.existsSync(IMAGE_MAPPING_FILE)) {
       const data = fs.readFileSync(IMAGE_MAPPING_FILE, 'utf8')
+      console.log(`📂 Loaded image mapping from ${IMAGE_MAPPING_FILE}`)
       return JSON.parse(data)
+    } else {
+      console.log(`📂 No existing image mapping found, starting fresh`)
     }
   } catch (error) {
-    console.error('Error loading image mapping:', error)
+    console.error('❌ Error loading image mapping:', error.message)
   }
   return {}
 }
@@ -35,23 +38,40 @@ function loadImageMapping() {
 function saveImageMapping(mapping) {
   try {
     fs.writeFileSync(IMAGE_MAPPING_FILE, JSON.stringify(mapping, null, 2))
-    console.log('✅ Image mapping saved')
+    console.log(`💾 Image mapping saved to ${IMAGE_MAPPING_FILE}`)
   } catch (error) {
-    console.error('❌ Error saving image mapping:', error)
+    console.error('❌ Error saving image mapping:', error.message)
   }
 }
 
+// Export function to get media file ID by filename
+export function getMediaFileIdByFilename(filename) {
+  const mapping = loadImageMapping()
+  const decodedFilename = decodeURIComponent(filename).toLowerCase()
+  const mediaFileId = mapping[decodedFilename] || null
+  if (mediaFileId) {
+    console.log(
+      `🔍 Found mediaFileId ${mediaFileId} for filename: ${decodedFilename}`
+    )
+  } else {
+    console.log(`🔍 No mediaFileId found for filename: ${decodedFilename}`)
+  }
+  return mediaFileId
+}
 // Download image to buffer
 export async function downloadImageBuffer(fileName) {
-  const response = await axios({
-    url: `${baseImageUrl}/${fileName}?auto=compress`,
-    method: 'GET',
-    responseType: 'arraybuffer',
-  })
+  // const response = await axios({
+  //   url: `${baseImageUrl}/${fileName}`,
+  //   method: 'GET',
+  //   responseType: 'arraybuffer',
+  // })
+  // console.log('URL:', `${baseImageUrl}/${fileName}`)
+  const buffer = await fs.readFileSync(`${baseImageUrl}/${fileName}`)
+  // console.log('BUFFER', buffer)
 
   return {
-    buffer: Buffer.from(response.data),
-    contentType: response.headers['content-type'],
+    buffer,
+    // contentType: response.headers['content-type'],
   }
 }
 
@@ -59,7 +79,8 @@ export async function downloadImageBuffer(fileName) {
 export async function uploadToWebiny(
   fileName,
   caption = '',
-  addedById = '68ecba72ffef4e0002407de1#0002'
+  // addedById = '68ecba72ffef4e0002407de1#0003' //LOCAL
+  addedById = '68dba1c6f258460002afd595#0005' //DEV
 ) {
   try {
     console.log(`📤 Uploading: ${fileName}`)
@@ -80,7 +101,7 @@ export async function uploadToWebiny(
     formData.append(
       'data[0]',
       JSON.stringify({
-        type: 'photo',
+        type: 'story',
         aliases: [`files/story/${decodedFileName}`],
         caption: caption,
         addedById,
@@ -91,7 +112,24 @@ export async function uploadToWebiny(
           height: dimensions.height,
           width: dimensions.width,
         },
-        tags: [],
+      })
+    )
+
+    formData.append(
+      'data[1]',
+      JSON.stringify({
+        type: 'video',
+        aliases: [`files/video/${decodedFileName}`],
+        caption: caption,
+        addedById,
+        info: {
+          name: decodedFileName,
+          type: contentType || 'image/jpeg',
+          size: buffer.length,
+          height: dimensions.height,
+          width: dimensions.width,
+        },
+        urls: [''],
       })
     )
 
@@ -226,11 +264,11 @@ export async function uploadToWebiny(
 //   }
 // }
 
-// Export function to get media file ID by filename
-export function getMediaFileIdByFilename(filename) {
-  const mapping = loadImageMapping()
-  return mapping[filename] || null
-}
+// // Export function to get media file ID by filename
+// export function getMediaFileIdByFilename(filename) {
+//   const mapping = loadImageMapping()
+//   return mapping[filename] || null
+// }
 
 // Run the migration
 // migrateImages()
