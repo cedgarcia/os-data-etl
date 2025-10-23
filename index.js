@@ -9,110 +9,15 @@ import {
   mapUser,
   mapLeague,
 } from './data/index.js'
-
 import { getMappings } from './data/fetchMappings.js'
 import { CONTENT_CONFIGS } from './utils/constants.js'
-
-// ============================================
-// LOGGING FUNCTIONS FOR LEAGUES
-// ============================================
-const logSuccessLeague = async (oldItem, webinyData) => {
-  const connectionString = config.database.connectionString
-  const webinyId = webinyData?.id || null
-
-  console.log(`🔍 Extracted League WebinyID: ${webinyId}`)
-
-  if (!webinyId) {
-    console.warn('⚠️ Warning: No webinyId found in response!')
-  }
-
-  const query = `
-    INSERT INTO success_migration_leagues 
-    (id, name, slug, webinyid)
-    VALUES (?, ?, ?, ?)
-  `
-
-  const params = [
-    oldItem.id,
-    oldItem.name || null,
-    oldItem.slug || null,
-    webinyId,
-  ]
-
-  return new Promise((resolve, reject) => {
-    sql.query(connectionString, query, params, (err, results) => {
-      if (err) {
-        if (
-          err.message.includes('Violation of PRIMARY KEY') ||
-          err.message.includes('duplicate')
-        ) {
-          console.warn(
-            `⚠️ DUPLICATE RECORD: League ${oldItem.id} already exists in success_migration_leagues`
-          )
-          reject({ type: 'duplicate', message: err.message })
-        } else {
-          console.error(
-            `❌ ERROR: Failed to log success for league ${oldItem.id}:`,
-            err.message
-          )
-          reject({ type: 'error', message: err.message })
-        }
-      } else {
-        console.log(
-          `✅ Logged successful migration for league ${oldItem.id} (${oldItem.name}) - WebinyID: ${webinyId}`
-        )
-        resolve(results)
-      }
-    })
-  })
-}
-
-// Log failed league migration
-const logFailedLeague = async (oldItem, errorMsg) => {
-  const connectionString = config.database.connectionString
-
-  const query = `
-    INSERT INTO failed_migration_leagues 
-    (id, name, slug, error)
-    VALUES (?, ?, ?, ?)
-  `
-
-  const params = [
-    oldItem.id,
-    oldItem.name || null,
-    oldItem.slug || null,
-    errorMsg,
-  ]
-
-  return new Promise((resolve, reject) => {
-    sql.query(connectionString, query, params, (err, results) => {
-      if (err) {
-        console.error(
-          `❌ Failed to log error for league ${oldItem.id}:`,
-          err.message
-        )
-        reject(err)
-      } else {
-        console.log(
-          `📝 Logged failed migration for league ${oldItem.id}: ${errorMsg}`
-        )
-        resolve(results)
-      }
-    })
-  })
-}
 
 // ============================================
 // LOGGING FUNCTIONS FOR ARTICLES
 // ============================================
 
-// Log successful article migration
 const logSuccessArticle = async (oldItem, webinyData) => {
   const connectionString = config.database.connectionString
-
-  // DEBUG: Log the entire response to see its structure
-  console.log('📋 Full Webiny Response:', JSON.stringify(webinyData, null, 2))
-
   const webinyId = webinyData?.story?.id || null
 
   console.log(`🔍 Extracted WebinyID: ${webinyId}`)
@@ -139,7 +44,6 @@ const logSuccessArticle = async (oldItem, webinyData) => {
   return new Promise((resolve, reject) => {
     sql.query(connectionString, query, params, (err, results) => {
       if (err) {
-        // Check if the error is due to an existing record (duplicate)
         if (
           err.message.includes('Violation of PRIMARY KEY') ||
           err.message.includes('duplicate')
@@ -165,7 +69,6 @@ const logSuccessArticle = async (oldItem, webinyData) => {
   })
 }
 
-// Log failed article migration
 const logFailure = async (oldItem, errorMsg) => {
   const connectionString = config.database.connectionString
 
@@ -258,16 +161,15 @@ const logFailure = async (oldItem, errorMsg) => {
 // LOGGING FUNCTIONS FOR SPONSORS
 // ============================================
 
-// Log successful sponsor migration
 const logSuccessSponsor = async (oldItem, webinyData) => {
   const connectionString = config.database.connectionString
-
-  // DEBUG: Log the entire response
-  console.log('📋 Full Sponsor Response:', JSON.stringify(webinyData, null, 2))
-
   const webinyId = webinyData?.id || null
 
   console.log(`🔍 Extracted Sponsor WebinyID: ${webinyId}`)
+
+  if (!webinyId) {
+    console.warn('⚠️ Warning: No webinyId found in response!')
+  }
 
   const query = `
     INSERT INTO success_migration_sponsors 
@@ -290,7 +192,6 @@ const logSuccessSponsor = async (oldItem, webinyData) => {
   return new Promise((resolve, reject) => {
     sql.query(connectionString, query, params, (err, results) => {
       if (err) {
-        // Check if the error is due to an existing record (duplicate)
         if (
           err.message.includes('Violation of PRIMARY KEY') ||
           err.message.includes('duplicate')
@@ -316,7 +217,6 @@ const logSuccessSponsor = async (oldItem, webinyData) => {
   })
 }
 
-// Log failed sponsor migration
 const logFailedSponsor = async (oldItem, errorMsg) => {
   const connectionString = config.database.connectionString
 
@@ -359,6 +259,273 @@ const logFailedSponsor = async (oldItem, errorMsg) => {
 }
 
 // ============================================
+// LOGGING FUNCTIONS FOR LEAGUES
+// ============================================
+
+const logSuccessLeague = async (oldItem, webinyData) => {
+  const connectionString = config.database.connectionString
+  const webinyId = webinyData?.id || null
+
+  console.log(`🔍 Extracted League WebinyID: ${webinyId}`)
+
+  if (!webinyId) {
+    console.warn('⚠️ Warning: No webinyId found in response!')
+  }
+
+  const query = `
+    INSERT INTO success_migration_leagues 
+    (id, name, slug, webinyid)
+    VALUES (?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name || null,
+    oldItem.slug || null,
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        if (
+          err.message.includes('Violation of PRIMARY KEY') ||
+          err.message.includes('duplicate')
+        ) {
+          console.warn(
+            `⚠️ DUPLICATE RECORD: League ${oldItem.id} already exists in success_migration_leagues`
+          )
+          reject({ type: 'duplicate', message: err.message })
+        } else {
+          console.error(
+            `❌ ERROR: Failed to log success for league ${oldItem.id}:`,
+            err.message
+          )
+          reject({ type: 'error', message: err.message })
+        }
+      } else {
+        console.log(
+          `✅ Logged successful migration for league ${oldItem.id} (${oldItem.name}) - WebinyID: ${webinyId}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+const logFailedLeague = async (oldItem, errorMsg) => {
+  const connectionString = config.database.connectionString
+
+  const query = `
+    INSERT INTO failed_migration_leagues 
+    (id, name, slug, error)
+    VALUES (?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name || null,
+    oldItem.slug || null,
+    errorMsg,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log error for league ${oldItem.id}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `📝 Logged failed migration for league ${oldItem.id}: ${errorMsg}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// ============================================
+// LOGGING FUNCTIONS FOR CATEGORIES
+// ============================================
+
+const logSuccessCategory = async (oldItem, webinyData) => {
+  const connectionString = config.database.connectionString
+  const webinyId = webinyData?.id || null
+
+  console.log(`🔍 Extracted Category WebinyID: ${webinyId}`)
+
+  if (!webinyId) {
+    console.warn('⚠️ Warning: No webinyId found in response!')
+  }
+
+  const query = `
+    INSERT INTO success_migration_categories 
+    (id, name, slug, webinyid)
+    VALUES (?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name || null,
+    oldItem.slug || null,
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        if (
+          err.message.includes('Violation of PRIMARY KEY') ||
+          err.message.includes('duplicate')
+        ) {
+          console.warn(
+            `⚠️ DUPLICATE RECORD: Category ${oldItem.id} already exists in success_migration_categories`
+          )
+          reject({ type: 'duplicate', message: err.message })
+        } else {
+          console.error(
+            `❌ ERROR: Failed to log success for category ${oldItem.id}:`,
+            err.message
+          )
+          reject({ type: 'error', message: err.message })
+        }
+      } else {
+        console.log(
+          `✅ Logged successful migration for category ${oldItem.id} (${oldItem.name}) - WebinyID: ${webinyId}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+const logFailedCategory = async (oldItem, errorMsg) => {
+  const connectionString = config.database.connectionString
+
+  const query = `
+    INSERT INTO failed_migration_categories 
+    (id, name, slug, error)
+    VALUES (?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name || null,
+    oldItem.slug || null,
+    errorMsg,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log error for category ${oldItem.id}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `📝 Logged failed migration for category ${oldItem.id}: ${errorMsg}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// ============================================
+// LOGGING FUNCTIONS FOR USERS
+// ============================================
+
+const logSuccessUser = async (oldItem, webinyData, index) => {
+  const connectionString = config.database.connectionString
+  const webinyId = webinyData?.id || null
+  const authorIdentifier =
+    oldItem.distinct_author_count || `Contributor${index + 1}`
+
+  console.log(`🔍 Extracted User WebinyID: ${webinyId} for ${authorIdentifier}`)
+
+  if (!webinyId) {
+    console.warn('⚠️ Warning: No webinyId found in response!')
+  }
+
+  const query = `
+    INSERT INTO success_migration_users 
+    (author, webinyid)
+    VALUES (?, ?)
+  `
+
+  const params = [
+    oldItem.distinct_author_count, // Preserve empty string
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        if (
+          err.message.includes('Violation of PRIMARY KEY') ||
+          err.message.includes('duplicate')
+        ) {
+          console.warn(
+            `⚠️ DUPLICATE RECORD: User ${authorIdentifier} already exists in success_migration_users`
+          )
+          reject({ type: 'duplicate', message: err.message })
+        } else {
+          console.error(
+            `❌ ERROR: Failed to log success for user ${authorIdentifier}:`,
+            err.message
+          )
+          reject({ type: 'error', message: err.message })
+        }
+      } else {
+        console.log(
+          `✅ Logged successful migration for user ${authorIdentifier}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+const logFailedUser = async (oldItem, errorMsg, index) => {
+  const connectionString = config.database.connectionString
+  const authorIdentifier =
+    oldItem.distinct_author_count || `Contributor${index + 1}`
+
+  const query = `
+    INSERT INTO failed_migration_users 
+    (author, error)
+    VALUES (?, ?)
+  `
+
+  const params = [
+    oldItem.distinct_author_count, // Preserve empty string
+    errorMsg,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log error for user ${authorIdentifier}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `📝 Logged failed migration for user ${authorIdentifier}: ${errorMsg}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// ============================================
 // BASE API FUNCTIONS
 // ============================================
 
@@ -386,7 +553,6 @@ const postToWebiny = async (oldData, newData, endpoint) => {
       endpoint,
       error.response?.data || error.message
     )
-    // Check if the API error indicates a duplicate
     if (error.response?.data?.message?.includes('already exists')) {
       throw {
         type: 'duplicate',
@@ -431,7 +597,7 @@ const getTotalCount = async (contentType) => {
     let countQuery
     if (contentType === 'articles') {
       countQuery = `
-           SELECT COUNT(DISTINCT c.id) as total
+        SELECT COUNT(DISTINCT c.id) as total
         FROM contents c
         INNER JOIN contents_vertical cv ON c.id = cv.contentid
         WHERE cv.verticalid = 7 and type = 4 and status = 'Published'
@@ -442,6 +608,13 @@ const getTotalCount = async (contentType) => {
       countQuery = `SELECT COUNT(*) as total FROM vertical_subvertical`
     } else if (contentType === 'categories') {
       countQuery = `SELECT COUNT(*) as total FROM category`
+    } else if (contentType === 'users') {
+      countQuery = `
+        SELECT COUNT(DISTINCT c.author) as total
+        FROM contents c
+        INNER JOIN contents_vertical cv ON c.id = cv.contentid
+        WHERE cv.verticalid = 7
+      `
     } else {
       countQuery = `SELECT COUNT(*) as total FROM ${contentType}`
     }
@@ -520,9 +693,7 @@ const readDatabaseQuery = async (
 const mapData = async (contentType, data) => {
   switch (contentType) {
     case 'articles':
-      const list = await Promise.all(data.map(async (item) => mapArticle(item)))
-      // console.log('list:', list);
-      return list
+      return await Promise.all(data.map(async (item) => mapArticle(item)))
     case 'categories':
       return await Promise.all(data.map(async (item) => mapCategory(item)))
     case 'leagues':
@@ -530,7 +701,9 @@ const mapData = async (contentType, data) => {
     case 'sponsors':
       return await Promise.all(data.map(async (item) => mapSponsor(item)))
     case 'users':
-      return await Promise.all(data.map(async (item) => mapUser(item)))
+      return await Promise.all(
+        data.map(async (item, index) => mapUser(item, index))
+      )
     case 'websites':
       return data
     default:
@@ -568,7 +741,7 @@ const processBatch = async (contentType, oldData) => {
   let existingCount = 0
 
   // Limit concurrency for API posts and database queries
-  const limit = pLimit(10) // Concurrent limit of 10
+  const limit = pLimit(10)
 
   // Check for already migrated records
   const connectionString = config.database.connectionString
@@ -593,6 +766,11 @@ const processBatch = async (contentType, oldData) => {
       SELECT id FROM success_migration_categories 
       WHERE id IN (${oldData.map(() => '?').join(', ')})
     `
+  } else if (contentType === 'users') {
+    checkExistingQuery = `
+      SELECT author FROM success_migration_users 
+      WHERE author IN (${oldData.map(() => '?').join(', ')})
+    `
   } else {
     checkExistingQuery = `
       SELECT id FROM success_migration_${contentType} 
@@ -604,7 +782,9 @@ const processBatch = async (contentType, oldData) => {
     sql.query(
       connectionString,
       checkExistingQuery,
-      oldData.map((item) => item.id),
+      oldData.map((item) =>
+        contentType === 'users' ? item.distinct_author_count : item.id
+      ),
       (err, results) => {
         if (err) {
           console.error(
@@ -613,13 +793,22 @@ const processBatch = async (contentType, oldData) => {
           )
           reject(err)
         } else {
-          resolve(results.map((row) => row.id))
+          resolve(
+            results.map((row) =>
+              contentType === 'users' ? row.author : row.id
+            )
+          )
         }
       }
     )
   })
 
-  const dataToProcess = oldData.filter((item) => !existingIds.includes(item.id))
+  const dataToProcess = oldData.filter(
+    (item) =>
+      !existingIds.includes(
+        contentType === 'users' ? item.distinct_author_count : item.id
+      )
+  )
   console.log(
     `📊 Processing ${dataToProcess.length} of ${
       oldData.length
@@ -647,6 +836,8 @@ const processBatch = async (contentType, oldData) => {
           await logFailedLeague(oldItem, `Mapping error: ${error.message}`)
         } else if (contentType === 'categories') {
           await logFailedCategory(oldItem, `Mapping error: ${error.message}`)
+        } else if (contentType === 'users') {
+          await logFailedUser(oldItem, `Mapping error: ${error.message}`, index)
         }
         return { oldItem, error: error.message }
       }
@@ -683,6 +874,8 @@ const processBatch = async (contentType, oldData) => {
               await logSuccessLeague(oldItem, postResult.data)
             } else if (contentType === 'categories') {
               await logSuccessCategory(oldItem, postResult.data)
+            } else if (contentType === 'users') {
+              await logSuccessUser(oldItem, postResult.data, index)
             }
             return { success: true }
           } catch (logError) {
@@ -728,6 +921,8 @@ const processBatch = async (contentType, oldData) => {
           await logFailedLeague(oldItem, `Posting error: ${errorMessage}`)
         } else if (contentType === 'categories') {
           await logFailedCategory(oldItem, `Posting error: ${errorMessage}`)
+        } else if (contentType === 'users') {
+          await logFailedUser(oldItem, `Posting error: ${errorMessage}`, index)
         }
         return { success: false, existing: isExisting, error: errorMessage }
       }
@@ -742,6 +937,7 @@ const processBatch = async (contentType, oldData) => {
 
   return { successCount, errorCount, existingCount }
 }
+
 // ============================================
 // MAIN MIGRATION FUNCTION
 // ============================================
@@ -912,83 +1108,38 @@ export const migrateBatch = async (migrations = []) => {
 // MAIN EXECUTION
 // ============================================
 
-// const main = async () => {
-//   try {
-//     console.log('🏁 Starting migration process...');
-//     console.log(
-//       '📋 Available content types:',
-//       Object.keys(CONTENT_CONFIGS)
-//         .filter((key) => CONTENT_CONFIGS[key].queryKey)
-//         .join(', ')
-//     );
+const main = async () => {
+  try {
+    console.log('🏁 Starting migration process...')
+    console.log(
+      '📋 Available content types:',
+      Object.keys(CONTENT_CONFIGS)
+        .filter((key) => CONTENT_CONFIGS[key].queryKey)
+        .join(', ')
+    )
 
-//     const migrationPlan = [
-//       {
-//         contentType: 'sponsors',
-//         queryType: 'all',
-//         options: {
-//           batchSize: 10,
-//           maxBatches: null,
-//           startOffset: 0,
-//         },
-//       },
-//     ];
+    const migrationPlan = [
+      {
+        contentType: 'sponsors',
+        queryType: 'all',
+        options: {
+          batchSize: 10,
+          maxBatches: null,
+          startOffset: 0,
+        },
+      },
+    ]
 
-//     const results = await migrateBatch(migrationPlan);
+    const results = await migrateBatch(migrationPlan)
 
-//     console.log('\n🎊 All migrations completed!');
-//     console.log('📊 Results:', JSON.stringify(results, null, 2));
-//   } catch (error) {
-//     console.error('💥 Main execution failed:', error);
-//     process.exit(1);
-//   }
-// };
+    console.log('\n🎊 All migrations completed!')
+    console.log('📊 Results:', JSON.stringify(results, null, 2))
+  } catch (error) {
+    console.error('💥 Main execution failed:', error)
+    process.exit(1)
+  }
+}
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
-
-// Examples
-// await migrateData('articles', 'all', { batchSize: 10, maxBatches: 10 })
-
-//  await migrateData('sponsors', 'all', { batchSize: 2, maxBatches: 2 })
-
-// Test with first 50 records (5 batches of 10):
-// await migrateData('articles', 'batch', { batchSize: 10, maxBatches: 5 })
-//
-// Resume from record 100:
-// await migrateData('articles', 'all', { batchSize: 10, startOffset: 100 })
-//
-// Process single test record (no batching):
-// await migrateData('articles', 'test')
-
-// export default {
-//   postContent,
-//   postCategory,
-//   postSponsor,
-//   postUser,
-//   migrateData,
-//   migrateBatch,
-// }
-
-// await migrateData('categories', 'test')
-// await migrateData('categories', 'batch')
-// await migrateData('categories', 'all')
-// await migrateData('categories', 'custom')
-
-// await migrateData('users', 'test')
-// await migrateData('users', 'batch')
-// await migrateData('users', 'all')
-// await migrateData('users', 'custom')
-
-// await migrateData('articles', 'test')
-// await migrateData('articles', 'batch')
-// await migrateData('articles', 'all')
-// await migrateData('articles', 'custom')
-
-// await migrateData('sponsors', 'test')
-// await migrateData('users', 'batch')
-// await migrateData('users', 'all')
-// await migrateData('users', 'custom')
-
-// await migrateData('sponsors', 'test')

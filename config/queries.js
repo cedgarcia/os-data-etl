@@ -1,9 +1,9 @@
 const queries = {
   // USERS
   users: {
-    test: 'SELECT * FROM contributor WHERE id = 3',
-    batch: 'SELECT TOP 10 * FROM contributor',
-    all: 'SELECT * FROM contributor',
+    all: `SELECT DISTINCT c.author AS distinct_author_count 
+        FROM contents c INNER JOIN contents_vertical cv ON c.id = cv.contentid 
+        WHERE cv.verticalid = 7;`,
   },
 
   // WEBSITES

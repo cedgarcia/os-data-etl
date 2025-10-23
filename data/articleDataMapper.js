@@ -1,28 +1,58 @@
-import { websiteMap, leagueMap, categoryMap, statusMap } from './mappings.js'
-
-import { usersMap } from './mappings.js'
-
+import {
+  websiteMap,
+  leagueMap,
+  categoryMap,
+  statusMap,
+  usersMap,
+} from './mappings.js'
 import { cleanArticleBody } from '../utils/cleanArticleBody.js'
 import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
 
 export async function mapArticle(oldArticle) {
-  const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
+  // LOCAL ENVIRONMENT
+  // const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
 
-  // Use creator/updater fields if available in MSSQL data, else default to 'One'
-  const addedById =
-    oldArticle.creator && usersMap[oldArticle.creator]
-      ? usersMap[oldArticle.creator]
-      : usersMap['One'] || defaultUserId
+  //DEV ENVIRONMENT
+  const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports" user
 
-  if (!usersMap['One']) {
-    console.warn(
-      `⚠️ No usersMap entry for "One", using fallback ID: ${defaultUserId}`
-    )
+  // Map the author field from the article to the corresponding migrated user
+  let addedById = defaultUserId // Start with default
+
+  if (oldArticle.author && typeof oldArticle.author === 'string') {
+    const authorName = oldArticle.author.trim()
+
+    // Look up the author in usersMap
+    if (usersMap[authorName]) {
+      addedById = usersMap[authorName]
+      // console.log(
+      //   `✅ Mapped author "${authorName}" to user ID: ${addedById} for article ${oldArticle.id}`
+      // )
+    } else if (authorName === '') {
+      // Handle empty string authors
+      if (usersMap['']) {
+        addedById = usersMap['']
+        // console.log(
+        //   `✅ Mapped empty author to user ID: ${addedById} for article ${oldArticle.id}`
+        // )
+      } else {
+        // console.warn(
+        //   `⚠️ Empty author not found in usersMap for article ${oldArticle.id}, using default user`
+        // )
+      }
+    } else {
+      // console.warn(
+      //   `⚠️ Author "${authorName}" not found in usersMap for article ${oldArticle.id}, using default user`
+      // )
+    }
+  } else {
+    // console.warn(
+    //   `⚠️ No author field for article ${oldArticle.id}, using default user`
+    // )
   }
 
   let mediaFileId = oldArticle.existingMediaFileId || null
 
-  // Image upload logic remains unchanged
+  // Image upload logic
   if (
     !mediaFileId &&
     oldArticle.image &&
@@ -85,12 +115,12 @@ export async function mapArticle(oldArticle) {
     status: 'publish',
     slug: oldArticle.slug || '',
     mediaFileId: mediaFileId || null,
-    addedById: addedById, // Keep this as is or map dynamically if authorsMap is populated
+    addedById: addedById, // This now uses the mapped author
     categoryId: categoryMap[oldArticle.category] || null,
     leagueId: leagueMap[oldArticle.subverticalid] || null,
     websiteId: websiteMap[oldArticle.verticalid] || null,
     contentBlock: oldArticle.contentBlock || null,
-    body: oldArticle.body || null,
+    body: cleanArticleBody(oldArticle.body) || null,
     settings: null,
     publishedAt: oldArticle.post || null,
     author: {

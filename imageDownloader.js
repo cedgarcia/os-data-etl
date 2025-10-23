@@ -85,7 +85,7 @@ export async function uploadToWebiny(
   try {
     console.log(`📤 Uploading: ${fileName}`)
 
-    const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports"
+    const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports"
     const addedById = usersMap['One'] || defaultUserId // Use authorsMap for dynamic mapping
 
     if (!usersMap['One']) {
