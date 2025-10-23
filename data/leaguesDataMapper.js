@@ -1,45 +1,38 @@
+import { usersMap } from './mappings.js'
+
 export const mapLeague = (old) => {
+  const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
+  // Use creator/updater fields if available in the MSSQL data, else default to 'One'
+  const addedById =
+    old.creator && usersMap[old.creator]
+      ? usersMap[old.creator]
+      : usersMap['One'] || defaultUserId
+  const updatedById =
+    old.updater && usersMap[old.updater]
+      ? usersMap[old.updater]
+      : usersMap['One'] || defaultUserId
+
+  if (!usersMap['One']) {
+    console.warn(
+      `⚠️ No usersMap entry for "One", using fallback ID: ${defaultUserId}`
+    )
+  }
+
   return {
     name: old.name,
-    link: old.slug.replace(/-/g, '').toLowerCase(),
+    link: old.slug ? old.slug.replace(/-/g, '').toLowerCase() : '',
     redirectUrl: 'Internal',
     refs: [
       {
         model: 'addedBy',
-        // id: '68ecba72ffef4e0002407de1#0003', //LOCAL
-        id: '68dba1c6f258460002afd595#0005', // DEV
+        id: addedById,
         modelId: 'users',
       },
       {
         model: 'updatedBy',
-        // id: '68ecba72ffef4e0002407de1#0003', //LOCAl
-        id: '68dba1c6f258460002afd595#0005', // DEV
+        id: updatedById,
         modelId: 'users',
       },
     ],
-    // order: old.sequence,
   }
 }
-
-// old
-
-// id
-// verticalid
-// name
-// slug
-//active
-// logo
-// sequence
-// creator
-// created
-// updater
-// updated
-
-// new
-
-// name
-// redirectUrl  -> internal
-// link
-// addedBy
-// updatedBy
-// order

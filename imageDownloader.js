@@ -5,8 +5,7 @@ import sql from 'msnodesqlv8'
 import FormData from 'form-data'
 import sizeOf from 'image-size'
 import config from './config/index.js'
-
-// const query = `select image, caption from contents where status = 'published' order by id offset [offsetValue] rows fetch next 1 rows only`
+import { usersMap } from './data/mappings.js' // Import authorsMap
 
 const query = `
   SELECT c.image, c.caption
@@ -15,7 +14,7 @@ const query = `
   WHERE cv.verticalid = 7
 `
 // const folderPath = 'assets/images'
-const baseImageUrl = './assets/images2'
+const baseImageUrl = './assets/thumbnails'
 const IMAGE_MAPPING_FILE = 'image-mapping.json' // Store the mapping
 
 // Load existing mapping or create new one
@@ -58,6 +57,7 @@ export function getMediaFileIdByFilename(filename) {
   }
   return mediaFileId
 }
+
 // Download image to buffer
 export async function downloadImageBuffer(fileName) {
   // const response = await axios({
@@ -78,12 +78,21 @@ export async function downloadImageBuffer(fileName) {
 // Upload image to Webiny API
 export async function uploadToWebiny(
   fileName,
-  caption = '',
+  caption = ''
   // addedById = '68ecba72ffef4e0002407de1#0003' //LOCAL
-  addedById = '68dba1c6f258460002afd595#0005' //DEV
+  // addedById = '68dba1c6f258460002afd595#0005' //DEV
 ) {
   try {
     console.log(`📤 Uploading: ${fileName}`)
+
+    const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports"
+    const addedById = usersMap['One'] || defaultUserId // Use authorsMap for dynamic mapping
+
+    if (!usersMap['One']) {
+      console.warn(
+        `⚠️ No authorsMap entry for "One", using fallback ID: ${defaultUserId}`
+      )
+    }
 
     const { buffer, contentType } = await downloadImageBuffer(fileName)
     const dimensions = sizeOf(buffer)

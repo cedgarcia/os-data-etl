@@ -1,11 +1,28 @@
 import { websiteMap, leagueMap, categoryMap, statusMap } from './mappings.js'
+
+import { usersMap } from './mappings.js'
+
 import { cleanArticleBody } from '../utils/cleanArticleBody.js'
 import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
 
 export async function mapArticle(oldArticle) {
+  const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
+
+  // Use creator/updater fields if available in MSSQL data, else default to 'One'
+  const addedById =
+    oldArticle.creator && usersMap[oldArticle.creator]
+      ? usersMap[oldArticle.creator]
+      : usersMap['One'] || defaultUserId
+
+  if (!usersMap['One']) {
+    console.warn(
+      `⚠️ No usersMap entry for "One", using fallback ID: ${defaultUserId}`
+    )
+  }
+
   let mediaFileId = oldArticle.existingMediaFileId || null
 
-  // Check if image exists and is valid, and no existing mediaFileId is provided
+  // Image upload logic remains unchanged
   if (
     !mediaFileId &&
     oldArticle.image &&
@@ -14,7 +31,6 @@ export async function mapArticle(oldArticle) {
   ) {
     const decodedFileName = decodeURIComponent(oldArticle.image.trim())
 
-    // Check if image is already uploaded
     mediaFileId = getMediaFileIdByFilename(decodedFileName)
 
     if (mediaFileId) {
@@ -22,7 +38,6 @@ export async function mapArticle(oldArticle) {
         `⏭️ Skipping upload for image: ${decodedFileName} (already uploaded, mediaFileId: ${mediaFileId})`
       )
     } else {
-      // Prepare caption for upload
       let caption = oldArticle.caption
       if (!caption || typeof caption !== 'string' || caption.trim() === '') {
         caption = oldArticle.title || ''
@@ -70,8 +85,7 @@ export async function mapArticle(oldArticle) {
     status: 'publish',
     slug: oldArticle.slug || '',
     mediaFileId: mediaFileId || null,
-    // addedById: '68ecba72ffef4e0002407de1#0003', //LOCAL
-    addedById: '68dba1c6f258460002afd595#0006', // DEV
+    addedById: addedById, // Keep this as is or map dynamically if authorsMap is populated
     categoryId: categoryMap[oldArticle.category] || null,
     leagueId: leagueMap[oldArticle.subverticalid] || null,
     websiteId: websiteMap[oldArticle.verticalid] || null,

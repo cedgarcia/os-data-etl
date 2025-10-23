@@ -1,6 +1,7 @@
 import sql from 'msnodesqlv8'
 import axios from 'axios'
 import config from './config/index.js'
+import pLimit from 'p-limit'
 import {
   mapArticle,
   mapCategory,
@@ -8,7 +9,98 @@ import {
   mapUser,
   mapLeague,
 } from './data/index.js'
+
+import { getMappings } from './data/fetchMappings.js'
 import { CONTENT_CONFIGS } from './utils/constants.js'
+
+// ============================================
+// LOGGING FUNCTIONS FOR LEAGUES
+// ============================================
+const logSuccessLeague = async (oldItem, webinyData) => {
+  const connectionString = config.database.connectionString
+  const webinyId = webinyData?.id || null
+
+  console.log(`🔍 Extracted League WebinyID: ${webinyId}`)
+
+  if (!webinyId) {
+    console.warn('⚠️ Warning: No webinyId found in response!')
+  }
+
+  const query = `
+    INSERT INTO success_migration_leagues 
+    (id, name, slug, webinyid)
+    VALUES (?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name || null,
+    oldItem.slug || null,
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        if (
+          err.message.includes('Violation of PRIMARY KEY') ||
+          err.message.includes('duplicate')
+        ) {
+          console.warn(
+            `⚠️ DUPLICATE RECORD: League ${oldItem.id} already exists in success_migration_leagues`
+          )
+          reject({ type: 'duplicate', message: err.message })
+        } else {
+          console.error(
+            `❌ ERROR: Failed to log success for league ${oldItem.id}:`,
+            err.message
+          )
+          reject({ type: 'error', message: err.message })
+        }
+      } else {
+        console.log(
+          `✅ Logged successful migration for league ${oldItem.id} (${oldItem.name}) - WebinyID: ${webinyId}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+// Log failed league migration
+const logFailedLeague = async (oldItem, errorMsg) => {
+  const connectionString = config.database.connectionString
+
+  const query = `
+    INSERT INTO failed_migration_leagues 
+    (id, name, slug, error)
+    VALUES (?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.name || null,
+    oldItem.slug || null,
+    errorMsg,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(
+          `❌ Failed to log error for league ${oldItem.id}:`,
+          err.message
+        )
+        reject(err)
+      } else {
+        console.log(
+          `📝 Logged failed migration for league ${oldItem.id}: ${errorMsg}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
 
 // ============================================
 // LOGGING FUNCTIONS FOR ARTICLES
@@ -475,14 +567,39 @@ const processBatch = async (contentType, oldData) => {
   let errorCount = 0
   let existingCount = 0
 
-  // Check for already migrated articles
-  const connectionString = config.database.connectionString
-  const checkExistingQuery = `
-    SELECT id FROM success_migration_articles 
-    WHERE id IN (${oldData.map(() => '?').join(', ')})
-  `
+  // Limit concurrency for API posts and database queries
+  const limit = pLimit(10) // Concurrent limit of 10
 
-  // Get list of already migrated IDs
+  // Check for already migrated records
+  const connectionString = config.database.connectionString
+  let checkExistingQuery
+  if (contentType === 'articles') {
+    checkExistingQuery = `
+      SELECT id FROM success_migration_articles 
+      WHERE id IN (${oldData.map(() => '?').join(', ')})
+    `
+  } else if (contentType === 'sponsors') {
+    checkExistingQuery = `
+      SELECT id FROM success_migration_sponsors 
+      WHERE id IN (${oldData.map(() => '?').join(', ')})
+    `
+  } else if (contentType === 'leagues') {
+    checkExistingQuery = `
+      SELECT id FROM success_migration_leagues 
+      WHERE id IN (${oldData.map(() => '?').join(', ')})
+    `
+  } else if (contentType === 'categories') {
+    checkExistingQuery = `
+      SELECT id FROM success_migration_categories 
+      WHERE id IN (${oldData.map(() => '?').join(', ')})
+    `
+  } else {
+    checkExistingQuery = `
+      SELECT id FROM success_migration_${contentType} 
+      WHERE id IN (${oldData.map(() => '?').join(', ')})
+    `
+  }
+
   const existingIds = await new Promise((resolve, reject) => {
     sql.query(
       connectionString,
@@ -490,7 +607,10 @@ const processBatch = async (contentType, oldData) => {
       oldData.map((item) => item.id),
       (err, results) => {
         if (err) {
-          console.error('❌ Error checking existing articles:', err.message)
+          console.error(
+            `❌ Error checking existing ${contentType}:`,
+            err.message
+          )
           reject(err)
         } else {
           resolve(results.map((row) => row.id))
@@ -499,122 +619,129 @@ const processBatch = async (contentType, oldData) => {
     )
   })
 
-  // Filter out already migrated articles
   const dataToProcess = oldData.filter((item) => !existingIds.includes(item.id))
-
   console.log(
     `📊 Processing ${dataToProcess.length} of ${
       oldData.length
-    } records (skipped ${
+    } ${contentType} records (skipped ${
       oldData.length - dataToProcess.length
     } already migrated)`
   )
 
-  // Map data
-  const mappedDataPromises = dataToProcess.map(async (oldItem, index) => {
-    try {
-      const newItem = await mapData(contentType, [oldItem])
-      return { oldItem, newItem: newItem[0] }
-    } catch (error) {
-      console.error(
-        `❌ Failed to map ${contentType} item ${index + 1}:`,
-        error.message
-      )
-      if (contentType === 'articles') {
-        await logFailure(oldItem, `Mapping error: ${error.message}`)
-      } else if (contentType === 'sponsors') {
-        await logFailedSponsor(oldItem, `Mapping error: ${error.message}`)
+  // Map data concurrently
+  const mappedDataPromises = dataToProcess.map((oldItem, index) =>
+    limit(async () => {
+      try {
+        const newItem = await mapData(contentType, [oldItem])
+        return { oldItem, newItem: newItem[0] }
+      } catch (error) {
+        console.error(
+          `❌ Failed to map ${contentType} item ${index + 1}:`,
+          error.message
+        )
+        if (contentType === 'articles') {
+          await logFailure(oldItem, `Mapping error: ${error.message}`)
+        } else if (contentType === 'sponsors') {
+          await logFailedSponsor(oldItem, `Mapping error: ${error.message}`)
+        } else if (contentType === 'leagues') {
+          await logFailedLeague(oldItem, `Mapping error: ${error.message}`)
+        } else if (contentType === 'categories') {
+          await logFailedCategory(oldItem, `Mapping error: ${error.message}`)
+        }
+        return { oldItem, error: error.message }
       }
-      return { oldItem, error: error.message }
-    }
-  })
+    })
+  )
 
   const mappedResults = await Promise.all(mappedDataPromises)
 
-  // Post data with controlled concurrency
-  const postBatchSize = 5
-  for (let i = 0; i < mappedResults.length; i += postBatchSize) {
-    const batch = mappedResults.slice(i, i + postBatchSize)
-
-    const postPromises = batch.map(
-      async ({ oldItem, newItem, error }, index) => {
-        if (error) {
-          console.error(
-            `❌ Skipping item ${i + index + 1} due to mapping error: ${error}`
-          )
-          return { success: false, error }
-        }
-
-        try {
-          const result = await postData(contentType, oldItem, newItem)
-          if (result) {
-            console.log(
-              `✅ Successfully migrated ${contentType} item ${i + index + 1}`
-            )
-            try {
-              if (contentType === 'articles') {
-                await logSuccessArticle(oldItem, result.data)
-              } else if (contentType === 'sponsors') {
-                await logSuccessSponsor(oldItem, result.data)
-              }
-              return { success: true }
-            } catch (logError) {
-              if (logError.type === 'duplicate') {
-                console.warn(
-                  `⚠️ Item ${i + index + 1} already exists in Webiny`
-                )
-                return {
-                  success: false,
-                  existing: true,
-                  error: logError.message,
-                }
-              } else {
-                console.error(
-                  `❌ Failed to log success for ${contentType} item ${
-                    i + index + 1
-                  }`
-                )
-                return { success: false, error: logError.message }
-              }
-            }
-          }
-        } catch (error) {
-          let errorMessage = error.message
-          let isExisting = error.type === 'duplicate'
-          if (!isExisting) {
-            if (error.response?.data?.message?.includes('already exists')) {
-              isExisting = true
-              errorMessage = `Duplicate record: ${error.response.data.message}`
-            }
-          }
-          console.error(
-            `❌ Failed to migrate ${contentType} item ${i + index + 1}:`,
-            errorMessage
-          )
-          if (contentType === 'articles') {
-            await logFailure(oldItem, `Posting error: ${errorMessage}`)
-          } else if (contentType === 'sponsors') {
-            await logFailedSponsor(oldItem, `Posting error: ${errorMessage}`)
-          }
-          return { success: false, existing: isExisting, error: errorMessage }
-        }
+  // Post and log data concurrently
+  const postPromises = mappedResults.map((result, index) =>
+    limit(async () => {
+      const { oldItem, newItem, error } = result
+      if (error) {
+        console.error(
+          `❌ Skipping ${contentType} item ${
+            index + 1
+          } due to mapping error: ${error}`
+        )
+        return { success: false, error }
       }
-    )
 
-    const results = await Promise.all(postPromises)
-    successCount += results.filter((r) => r.success).length
-    errorCount += results.filter((r) => !r.success && !r.existing).length
-    existingCount += results.filter((r) => r.existing).length
+      try {
+        const postResult = await postData(contentType, oldItem, newItem)
+        if (postResult) {
+          console.log(
+            `✅ Successfully migrated ${contentType} item ${index + 1}`
+          )
+          try {
+            if (contentType === 'articles') {
+              await logSuccessArticle(oldItem, postResult.data)
+            } else if (contentType === 'sponsors') {
+              await logSuccessSponsor(oldItem, postResult.data)
+            } else if (contentType === 'leagues') {
+              await logSuccessLeague(oldItem, postResult.data)
+            } else if (contentType === 'categories') {
+              await logSuccessCategory(oldItem, postResult.data)
+            }
+            return { success: true }
+          } catch (logError) {
+            if (logError.type === 'duplicate') {
+              console.warn(
+                `⚠️ ${contentType} item ${index + 1} already exists in Webiny`
+              )
+              return {
+                success: false,
+                existing: true,
+                error: logError.message,
+              }
+            } else {
+              console.error(
+                `❌ Failed to log success for ${contentType} item ${
+                  index + 1
+                }:`,
+                logError.message
+              )
+              return { success: false, error: logError.message }
+            }
+          }
+        }
+      } catch (error) {
+        let errorMessage = error.message
+        let isExisting = error.type === 'duplicate'
+        if (
+          !isExisting &&
+          error.response?.data?.message?.includes('already exists')
+        ) {
+          isExisting = true
+          errorMessage = `Duplicate record: ${error.response.data.message}`
+        }
+        console.error(
+          `❌ Failed to migrate ${contentType} item ${index + 1}:`,
+          errorMessage
+        )
+        if (contentType === 'articles') {
+          await logFailure(oldItem, `Posting error: ${errorMessage}`)
+        } else if (contentType === 'sponsors') {
+          await logFailedSponsor(oldItem, `Posting error: ${errorMessage}`)
+        } else if (contentType === 'leagues') {
+          await logFailedLeague(oldItem, `Posting error: ${errorMessage}`)
+        } else if (contentType === 'categories') {
+          await logFailedCategory(oldItem, `Posting error: ${errorMessage}`)
+        }
+        return { success: false, existing: isExisting, error: errorMessage }
+      }
+    })
+  )
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
-
-  // Add skipped (already migrated) records to existingCount
+  const results = await Promise.all(postPromises)
+  successCount += results.filter((r) => r.success).length
+  errorCount += results.filter((r) => !r.success && !r.existing).length
+  existingCount += results.filter((r) => r.existing).length
   existingCount += oldData.length - dataToProcess.length
 
   return { successCount, errorCount, existingCount }
 }
-
 // ============================================
 // MAIN MIGRATION FUNCTION
 // ============================================
@@ -625,13 +752,14 @@ export const migrateData = async (
   options = {}
 ) => {
   try {
+    await getMappings()
     const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
+    const limit = pLimit(2) // Process up to 2 batches concurrently
 
     console.log(`\n🚀 Starting migration for ${contentType} (${queryType})`)
 
     if (queryType === 'test' || queryType === 'custom') {
       const oldData = await readDatabaseQuery(contentType, queryType)
-
       if (oldData.length === 0) {
         console.log('⚠️ No data found, skipping...')
         return { successCount: 0, errorCount: 0, existingCount: 0, total: 0 }
@@ -666,65 +794,75 @@ export const migrateData = async (
 
     let overallSuccessCount = 0
     let overallErrorCount = 0
-    let overallExistingCount = 0 // New counter for existing records
+    let overallExistingCount = 0
     let currentOffset = startOffset
 
+    const batchPromises = []
     for (let batchNum = 1; batchNum <= batchesToProcess; batchNum++) {
-      console.log(`\n${'='.repeat(60)}`)
-      console.log(
-        `📦 BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
+      batchPromises.push(
+        limit(async () => {
+          console.log(`\n${'='.repeat(60)}`)
+          console.log(
+            `📦 BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
+          )
+          console.log('='.repeat(60))
+
+          try {
+            const oldData = await readDatabaseQuery(
+              contentType,
+              queryType,
+              currentOffset,
+              batchSize
+            )
+
+            if (oldData.length === 0) {
+              console.log('⚠️ No more data, stopping...')
+              return { successCount: 0, errorCount: 0, existingCount: 0 }
+            }
+
+            console.log(`📥 Fetched ${oldData.length} records`)
+
+            const { successCount, errorCount, existingCount } =
+              await processBatch(contentType, oldData)
+
+            console.log(`\n✅ Batch ${batchNum} completed!`)
+            console.log(`  Success: ${successCount}/${oldData.length}`)
+            console.log(
+              `  Existing in Webiny: ${existingCount}/${oldData.length}`
+            )
+            console.log(`  Mapping failed: ${errorCount}/${oldData.length}`)
+            console.log(
+              `  Overall Progress: ${
+                overallSuccessCount +
+                successCount +
+                overallErrorCount +
+                errorCount +
+                overallExistingCount +
+                existingCount
+              }/${totalRecords}`
+            )
+
+            return { successCount, errorCount, existingCount }
+          } catch (error) {
+            console.error(`❌ Batch ${batchNum} failed:`, error.message)
+            return { successCount: 0, errorCount: batchSize, existingCount: 0 }
+          } finally {
+            currentOffset += batchSize
+          }
+        })
       )
-      console.log('='.repeat(60))
-
-      try {
-        const oldData = await readDatabaseQuery(
-          contentType,
-          queryType,
-          currentOffset,
-          batchSize
-        )
-
-        if (oldData.length === 0) {
-          console.log('⚠️ No more data, stopping...')
-          break
-        }
-
-        console.log(`📥 Fetched ${oldData.length} records`)
-
-        const { successCount, errorCount, existingCount } = await processBatch(
-          contentType,
-          oldData
-        )
-
-        overallSuccessCount += successCount
-        overallErrorCount += errorCount
-        overallExistingCount += existingCount
-
-        console.log(`\n✅ Batch ${batchNum} completed!`)
-        console.log(`  Success: ${successCount}/${oldData.length}`)
-        console.log(`  Existing in Webiny: ${existingCount}/${oldData.length}`)
-        console.log(`  Mapping failed: ${errorCount}/${oldData.length}`)
-        console.log(
-          `  Overall Progress: ${
-            overallSuccessCount + overallErrorCount + overallExistingCount
-          }/${totalRecords}`
-        )
-
-        currentOffset += batchSize
-
-        if (batchNum < batchesToProcess) {
-          console.log('⏳ Waiting 2 seconds before next batch...')
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-        }
-      } catch (error) {
-        console.error(`❌ Batch ${batchNum} failed:`, error.message)
-        overallErrorCount += batchSize
-        currentOffset += batchSize
-
-        console.log('⚠️ Continuing to next batch...')
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      }
     }
+
+    const batchResults = await Promise.all(batchPromises)
+    overallSuccessCount = batchResults.reduce(
+      (sum, r) => sum + r.successCount,
+      0
+    )
+    overallErrorCount = batchResults.reduce((sum, r) => sum + r.errorCount, 0)
+    overallExistingCount = batchResults.reduce(
+      (sum, r) => sum + r.existingCount,
+      0
+    )
 
     console.log(`\n${'='.repeat(60)}`)
     console.log('🎉 MIGRATION COMPLETED!')

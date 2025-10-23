@@ -1,26 +1,50 @@
+import { usersMap } from './mappings.js'
+
 export const mapCategory = (old) => {
-  const name = old.id === 18 ? 'Sports Life' : old.name
+  const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
+
+  // Use creator/updater fields if available in MSSQL data, else default to 'One'
+  const addedById =
+    old.creator && usersMap[old.creator]
+      ? usersMap[old.creator]
+      : usersMap['One'] || defaultUserId
+  const updatedById =
+    old.updater && usersMap[old.updater]
+      ? usersMap[old.updater]
+      : usersMap['One'] || defaultUserId
+
+  if (!usersMap['One']) {
+    console.warn(
+      `⚠️ No usersMap entry for "One", using fallback ID: ${defaultUserId}`
+    )
+  }
+
+  // Handle name and link mapping
+  const name = old.id === 18 ? 'Sports Life' : old.name || 'Unnamed Category'
   const link =
     old.id === 18
       ? 'sports-life'
       : old.name
       ? old.name.toLowerCase().replace(/\s+/g, '')
-      : ''
+      : 'unnamed-category'
+
+  if (!old.name && old.id !== 18) {
+    console.warn(`⚠️ Category ID ${old.id} has no name, using default: ${name}`)
+  }
+
   return {
-    name: name,
+    name,
     redirectUrl: 'Internal',
-    link: link,
+    link,
     refs: [
       {
         model: 'addedBy',
-        // id: '68ecba72ffef4e0002407de1#0003',
-        id: '68dba1c6f258460002afd595#0005',
+        id: addedById,
         modelId: 'users',
       },
       {
         model: 'updatedBy',
-        // id: '68ecba72ffef4e0002407de1#0003',
-        id: '68dba1c6f258460002afd595#0005',
+        id: updatedById,
         modelId: 'users',
       },
     ],
