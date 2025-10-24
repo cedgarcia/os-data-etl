@@ -84,7 +84,7 @@ const queries = {
   // VIDEOS
   videos: {
     test: ` 
-     SELECT c.*, cv.subverticalid, cv.verticalid
+      SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c
       LEFT JOIN contents_vertical cv ON c.id = cv.contentid
       WHERE c.id in (8156, 8171 ,8157,8159)
