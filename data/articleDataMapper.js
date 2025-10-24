@@ -13,44 +13,47 @@ export async function mapArticle(oldArticle) {
   // const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
 
   //DEV ENVIRONMENT
-  const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports" user
+  // const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports" user
+
+  //TEST ENVIRONMENT
+  const defaultUserId = '689579a9720a4d0002a21f3a#0012' // Fallback ID for "One Sports" user
 
   // Map the author field from the article to the corresponding migrated user
   let addedById = defaultUserId // Start with default
 
-  if (oldArticle.author && typeof oldArticle.author === 'string') {
-    const authorName = oldArticle.author.trim()
+  // if (oldArticle.author && typeof oldArticle.author === 'string') {
+  //   const authorName = oldArticle.author.trim()
 
-    // Look up the author in usersMap
-    if (usersMap[authorName]) {
-      addedById = usersMap[authorName]
-      // console.log(
-      //   `✅ Mapped author "${authorName}" to user ID: ${addedById} for article ${oldArticle.id}`
-      // )
-    } else if (authorName === '') {
-      // Handle empty string authors
-      if (usersMap['']) {
-        addedById = usersMap['']
-        // console.log(
-        //   `✅ Mapped empty author to user ID: ${addedById} for article ${oldArticle.id}`
-        // )
-      } else {
-        // console.warn(
-        //   `⚠️ Empty author not found in usersMap for article ${oldArticle.id}, using default user`
-        // )
-      }
-    } else {
-      // console.warn(
-      //   `⚠️ Author "${authorName}" not found in usersMap for article ${oldArticle.id}, using default user`
-      // )
-    }
-  } else {
-    // console.warn(
-    //   `⚠️ No author field for article ${oldArticle.id}, using default user`
-    // )
-  }
+  //   // Look up the author in usersMap
+  //   if (usersMap[authorName]) {
+  //     addedById = usersMap[authorName]
+  //     // console.log(
+  //     //   `✅ Mapped author "${authorName}" to user ID: ${addedById} for article ${oldArticle.id}`
+  //     // )
+  //   } else if (authorName === '') {
+  //     // Handle empty string authors
+  //     if (usersMap['']) {
+  //       addedById = usersMap['']
+  //       // console.log(
+  //       //   `✅ Mapped empty author to user ID: ${addedById} for article ${oldArticle.id}`
+  //       // )
+  //     } else {
+  //       // console.warn(
+  //       //   `⚠️ Empty author not found in usersMap for article ${oldArticle.id}, using default user`
+  //       // )
+  //     }
+  //   } else {
+  //     // console.warn(
+  //     //   `⚠️ Author "${authorName}" not found in usersMap for article ${oldArticle.id}, using default user`
+  //     // )
+  //   }
+  // } else {
+  //   // console.warn(
+  //   //   `⚠️ No author field for article ${oldArticle.id}, using default user`
+  //   // )
+  // }
 
-  let mediaFileId = oldArticle.existingMediaFileId || null
+  let mediaFileId = oldArticle.existingMediaFileId
 
   // Image upload logic
   if (
@@ -90,21 +93,23 @@ export async function mapArticle(oldArticle) {
         mediaFileId = null
       }
     }
-  } else if (!mediaFileId) {
-    console.log(
-      `⚠️ No valid image for article: ${oldArticle.id} (${
-        oldArticle.title || 'Untitled'
-      })`
-    )
   }
 
-  if (mediaFileId) {
+  // ⚠️ CRITICAL CHECK: Skip processing if no mediaFileId
+  if (!mediaFileId) {
     console.log(
-      `🔗 Assigned mediaFileId ${mediaFileId} to article ${oldArticle.id} (${
+      `⚠️ Skipping article ${oldArticle.id} (${
         oldArticle.title || 'Untitled'
-      })`
+      }) - No valid mediaFileId`
     )
+    return null
   }
+
+  console.log(
+    `🔗 Assigned mediaFileId ${mediaFileId} to article ${oldArticle.id} (${
+      oldArticle.title || 'Untitled'
+    })`
+  )
 
   const mappedArticle = {
     legacyId: oldArticle.id ? String(oldArticle.id) : null,
@@ -114,8 +119,8 @@ export async function mapArticle(oldArticle) {
     type: 'story',
     status: 'publish',
     slug: oldArticle.slug || '',
-    mediaFileId: mediaFileId || null,
-    addedById: addedById, // This now uses the mapped author
+    mediaFileId: mediaFileId,
+    addedById: addedById,
     categoryId: categoryMap[oldArticle.category] || null,
     leagueId: leagueMap[oldArticle.subverticalid] || null,
     websiteId: websiteMap[oldArticle.verticalid] || null,
