@@ -1,8 +1,40 @@
+/**
+ * Migration Script
+ *
+ * This script migrates data from a legacy database to a new Webiny CMS instance.
+ * It supports migrating articles, sponsors, leagues, categories, and users.
+ *
+ * The migration process includes:
+ * 1. Fetching data from the legacy database in batches.
+ * 2. Mapping the old data structure to the new Webiny CMS structure.
+ * 3. Posting the mapped data to the Webiny CMS via its API.
+ * 4. Logging successes and failures for each record.
+ * 5. Handling duplicates and errors gracefully.
+ *
+ *
+ * PRIORITY MIGRATION ORDER:
+ * 1. Leagues ✅
+ * 2. Categories ✅
+ * 3. Users (contributors) ✅
+ * 4. Sponsors (Cancelled)   ❌
+ * 5. Articles (main content)  ✅
+ * 6. Videos (Not finished yet)  ❌
+ */
+
 import sql from 'msnodesqlv8'
 import axios from 'axios'
-import config from './config/index.js'
 import pLimit from 'p-limit'
+import config from './config/index.js'
+import { getMappings } from './data/fetchMappings.js'
+import {
+  mapArticle,
+  mapCategory,
+  mapSponsor,
+  mapUser,
+  mapLeague,
+} from './data/index.js'
 
+import { CONTENT_CONFIGS } from './utils/constants.js'
 import {
   logSuccessArticle,
   logFailure,
@@ -15,19 +47,9 @@ import {
   logSuccessUser,
   logFailedUser,
 } from './utils/loggers.js'
-import { getMappings } from './data/fetchMappings.js'
-import {
-  mapArticle,
-  mapCategory,
-  mapSponsor,
-  mapUser,
-  mapLeague,
-} from './data/index.js'
-
-import { CONTENT_CONFIGS } from './utils/constants.js'
 
 // ============================================
-// BASE API FUNCTIONS
+// POST TO WEBINY API FUNCTIONS
 // ============================================
 const postToWebiny = async (oldData, newData, endpoint) => {
   if (!endpoint || !config.api.endpoints[endpoint]) {
@@ -66,10 +88,6 @@ const postToWebiny = async (oldData, newData, endpoint) => {
   }
 }
 
-export const postContent = async (oldData, newData) => {
-  return postToWebiny(oldData, newData, 'contents')
-}
-
 export const postLeague = async (oldData, newData) => {
   return postToWebiny(oldData, newData, 'leagues')
 }
@@ -78,45 +96,73 @@ export const postCategory = async (oldData, newData) => {
   return postToWebiny(oldData, newData, 'categories')
 }
 
-export const postSponsor = async (oldData, newData) => {
-  return postToWebiny(oldData, newData, 'sponsors')
-}
-
 export const postUser = async (oldData, newData) => {
   return postToWebiny(oldData, newData, 'users')
 }
 
+export const postSponsor = async (oldData, newData) => {
+  return postToWebiny(oldData, newData, 'sponsors')
+}
+
+export const postContent = async (oldData, newData) => {
+  return postToWebiny(oldData, newData, 'contents')
+}
+
+// export const postVideo= async (oldData, newData) => {
+//   return postToWebiny(oldData, newData, 'videos')
+// }
+
 // ============================================
 // DATABASE QUERY FUNCTIONS
 // ============================================
-
 const getTotalCount = async (contentType) => {
   try {
     const connectionString = config.database.connectionString
-
     let countQuery
-    if (contentType === 'articles') {
-      countQuery = `
-        SELECT COUNT(DISTINCT c.id) as total
-        FROM contents c
-        INNER JOIN contents_vertical cv ON c.id = cv.contentid
-        WHERE cv.verticalid = 7 and type = 4 and status = 'Published'
-      `
-    } else if (contentType === 'sponsors') {
-      countQuery = `SELECT COUNT(*) as total FROM sponsor`
-    } else if (contentType === 'leagues') {
-      countQuery = `SELECT COUNT(*) as total FROM vertical_subvertical`
-    } else if (contentType === 'categories') {
-      countQuery = `SELECT COUNT(*) as total FROM category`
-    } else if (contentType === 'users') {
-      countQuery = `
-        SELECT COUNT(DISTINCT c.author) as total
-        FROM contents c
-        INNER JOIN contents_vertical cv ON c.id = cv.contentid
-        WHERE cv.verticalid = 7
-      `
-    } else {
-      countQuery = `SELECT COUNT(*) as total FROM ${contentType}`
+
+    switch (contentType) {
+      case 'leagues':
+        countQuery = `SELECT COUNT(*) as total FROM vertical_subvertical`
+        break
+
+      case 'categories':
+        countQuery = `SELECT COUNT(*) as total FROM category`
+        break
+
+      case 'users':
+        countQuery = `
+          SELECT COUNT(DISTINCT c.author) as total
+          FROM contents c
+          INNER JOIN contents_vertical cv ON c.id = cv.contentid
+          WHERE cv.verticalid = 7
+        `
+        break
+
+      case 'sponsors':
+        countQuery = `SELECT COUNT(*) as total FROM sponsor`
+        break
+
+      case 'articles':
+        countQuery = `
+          SELECT COUNT(DISTINCT c.id) as total
+          FROM contents c
+          INNER JOIN contents_vertical cv ON c.id = cv.contentid
+          WHERE cv.verticalid = 7 and type = 4 and status = 'Published'
+        `
+        break
+
+      // case 'videos':
+      //   countQuery = `
+      //     SELECT COUNT(DISTINCT c.id) as total
+      //     FROM contents c
+      //     INNER JOIN contents_vertical cv ON c.id = cv.contentid
+      //     WHERE cv.verticalid = 7 and type = 5 and status = 'Published'
+      //   `
+      //   break
+
+      default:
+        countQuery = `SELECT COUNT(*) as total FROM ${contentType}`
+        break
     }
 
     return new Promise((resolve, reject) => {
@@ -134,6 +180,9 @@ const getTotalCount = async (contentType) => {
   }
 }
 
+// ============================================
+// READ FROM DATABASE QUERY
+// ============================================
 const readDatabaseQuery = async (
   contentType,
   queryType = 'test',
@@ -192,37 +241,40 @@ const readDatabaseQuery = async (
 
 const mapData = async (contentType, data) => {
   switch (contentType) {
-    case 'articles':
-      return await Promise.all(data.map(async (item) => mapArticle(item)))
-    case 'categories':
-      return await Promise.all(data.map(async (item) => mapCategory(item)))
     case 'leagues':
       return await Promise.all(data.map(async (item) => mapLeague(item)))
-    case 'sponsors':
-      return await Promise.all(data.map(async (item) => mapSponsor(item)))
+    case 'categories':
+      return await Promise.all(data.map(async (item) => mapCategory(item)))
     case 'users':
       return await Promise.all(
         data.map(async (item, index) => mapUser(item, index))
       )
+    case 'sponsors':
+      return await Promise.all(data.map(async (item) => mapSponsor(item)))
+    case 'articles':
+      return await Promise.all(data.map(async (item) => mapArticle(item)))
+    // case 'videos':
+    //   return await Promise.all(data.map(async (item) => mapVideo(item)))
     case 'websites':
       return data
     default:
       throw new Error(`No mapper found for ${contentType}`)
   }
 }
-
 const postData = async (contentType, oldItem, newItem) => {
   switch (contentType) {
-    case 'articles':
-      return await postContent(oldItem, newItem)
-    case 'categories':
-      return await postCategory(oldItem, newItem)
     case 'leagues':
       return await postLeague(oldItem, newItem)
-    case 'sponsors':
-      return await postSponsor(oldItem, newItem)
+    case 'categories':
+      return await postCategory(oldItem, newItem)
     case 'users':
       return await postUser(oldItem, newItem)
+    case 'sponsors':
+      return await postSponsor(oldItem, newItem)
+    case 'articles':
+      return await postContent(oldItem, newItem)
+    case 'videos':
+      return await postContent(oldItem, newItem)
     case 'websites':
       console.log('⚠️ Website migration not implemented yet')
       return null
@@ -246,36 +298,49 @@ const processBatch = async (contentType, oldData) => {
   // Check for already migrated records
   const connectionString = config.database.connectionString
   let checkExistingQuery
-  if (contentType === 'articles') {
-    checkExistingQuery = `
-      SELECT id FROM success_migration_articles 
-      WHERE id IN (${oldData.map(() => '?').join(', ')})
-    `
-  } else if (contentType === 'sponsors') {
-    checkExistingQuery = `
-      SELECT id FROM success_migration_sponsors 
-      WHERE id IN (${oldData.map(() => '?').join(', ')})
-    `
-  } else if (contentType === 'leagues') {
-    checkExistingQuery = `
-      SELECT id FROM success_migration_leagues 
-      WHERE id IN (${oldData.map(() => '?').join(', ')})
-    `
-  } else if (contentType === 'categories') {
-    checkExistingQuery = `
-      SELECT id FROM success_migration_categories 
-      WHERE id IN (${oldData.map(() => '?').join(', ')})
-    `
-  } else if (contentType === 'users') {
-    checkExistingQuery = `
-      SELECT author FROM success_migration_users 
-      WHERE author IN (${oldData.map(() => '?').join(', ')})
-    `
-  } else {
-    checkExistingQuery = `
-      SELECT id FROM success_migration_${contentType} 
-      WHERE id IN (${oldData.map(() => '?').join(', ')})
-    `
+
+  switch (contentType) {
+    case 'leagues':
+      checkExistingQuery = `
+        SELECT id FROM success_migration_leagues 
+        WHERE id IN (${oldData.map(() => '?').join(', ')})
+      `
+      break
+    case 'categories':
+      checkExistingQuery = `
+        SELECT id FROM success_migration_categories 
+        WHERE id IN (${oldData.map(() => '?').join(', ')})
+      `
+      break
+    case 'users':
+      checkExistingQuery = `
+          SELECT author FROM success_migration_users 
+          WHERE author IN (${oldData.map(() => '?').join(', ')})
+        `
+      break
+    case 'sponsors':
+      checkExistingQuery = `
+          SELECT id FROM success_migration_sponsors 
+          WHERE id IN (${oldData.map(() => '?').join(', ')})
+        `
+      break
+    case 'articles':
+      checkExistingQuery = `
+        SELECT id FROM success_migration_articles 
+        WHERE id IN (${oldData.map(() => '?').join(', ')})
+      `
+    // case 'videos':
+    //   checkExistingQuery = `
+    //     SELECT id FROM success_migration_videos
+    //     WHERE id IN (${oldData.map(() => '?').join(', ')})
+    //   `
+    //   break
+    default:
+      checkExistingQuery = `
+        SELECT id FROM success_migration_${contentType} 
+        WHERE id IN (${oldData.map(() => '?').join(', ')})
+      `
+      break
   }
 
   const existingIds = await new Promise((resolve, reject) => {
@@ -328,16 +393,35 @@ const processBatch = async (contentType, oldData) => {
           `❌ Failed to map ${contentType} item ${index + 1}:`,
           error.message
         )
-        if (contentType === 'articles') {
-          await logFailure(oldItem, `Mapping error: ${error.message}`)
-        } else if (contentType === 'sponsors') {
-          await logFailedSponsor(oldItem, `Mapping error: ${error.message}`)
-        } else if (contentType === 'leagues') {
-          await logFailedLeague(oldItem, `Mapping error: ${error.message}`)
-        } else if (contentType === 'categories') {
-          await logFailedCategory(oldItem, `Mapping error: ${error.message}`)
-        } else if (contentType === 'users') {
-          await logFailedUser(oldItem, `Mapping error: ${error.message}`, index)
+        switch (contentType) {
+          case 'leagues':
+            await logFailedLeague(oldItem, `Mapping error: ${error.message}`)
+            break
+          case 'categories':
+            await logFailedCategory(oldItem, `Mapping error: ${error.message}`)
+            break
+          case 'users':
+            await logFailedUser(
+              oldItem,
+              `Mapping error: ${error.message}`,
+              index
+            )
+            break
+          case 'sponsors':
+            await logFailedSponsor(oldItem, `Mapping error: ${error.message}`)
+            break
+          case 'articles':
+            await logFailure(oldItem, `Mapping error: ${error.message}`)
+            break
+          case 'videos':
+            await logFailure(oldItem, `Mapping error: ${error.message}`)
+            break
+
+          default:
+            console.warn(
+              `No mapping error logger defined for contentType: ${contentType}`
+            )
+            break
         }
         return { oldItem, error: error.message }
       }
@@ -366,16 +450,28 @@ const processBatch = async (contentType, oldData) => {
             `✅ Successfully migrated ${contentType} item ${index + 1}`
           )
           try {
-            if (contentType === 'articles') {
-              await logSuccessArticle(oldItem, postResult.data)
-            } else if (contentType === 'sponsors') {
-              await logSuccessSponsor(oldItem, postResult.data)
-            } else if (contentType === 'leagues') {
-              await logSuccessLeague(oldItem, postResult.data)
-            } else if (contentType === 'categories') {
-              await logSuccessCategory(oldItem, postResult.data)
-            } else if (contentType === 'users') {
-              await logSuccessUser(oldItem, postResult.data, index)
+            // Refactor if-else to switch for success logging
+            switch (contentType) {
+              case 'articles':
+                await logSuccessArticle(oldItem, postResult.data)
+                break
+              case 'sponsors':
+                await logSuccessSponsor(oldItem, postResult.data)
+                break
+              case 'leagues':
+                await logSuccessLeague(oldItem, postResult.data)
+                break
+              case 'categories':
+                await logSuccessCategory(oldItem, postResult.data)
+                break
+              case 'users':
+                await logSuccessUser(oldItem, postResult.data, index)
+                break
+              default:
+                console.warn(
+                  `No success logger defined for contentType: ${contentType}`
+                )
+                break
             }
             return { success: true }
           } catch (logError) {
@@ -413,16 +509,32 @@ const processBatch = async (contentType, oldData) => {
           `❌ Failed to migrate ${contentType} item ${index + 1}:`,
           errorMessage
         )
-        if (contentType === 'articles') {
-          await logFailure(oldItem, `Posting error: ${errorMessage}`)
-        } else if (contentType === 'sponsors') {
-          await logFailedSponsor(oldItem, `Posting error: ${errorMessage}`)
-        } else if (contentType === 'leagues') {
-          await logFailedLeague(oldItem, `Posting error: ${errorMessage}`)
-        } else if (contentType === 'categories') {
-          await logFailedCategory(oldItem, `Posting error: ${errorMessage}`)
-        } else if (contentType === 'users') {
-          await logFailedUser(oldItem, `Posting error: ${errorMessage}`, index)
+        // Refactor if-else to switch for posting error logging
+        switch (contentType) {
+          case 'articles':
+            await logFailure(oldItem, `Posting error: ${errorMessage}`)
+            break
+          case 'sponsors':
+            await logFailedSponsor(oldItem, `Posting error: ${errorMessage}`)
+            break
+          case 'leagues':
+            await logFailedLeague(oldItem, `Posting error: ${errorMessage}`)
+            break
+          case 'categories':
+            await logFailedCategory(oldItem, `Posting error: ${errorMessage}`)
+            break
+          case 'users':
+            await logFailedUser(
+              oldItem,
+              `Posting error: ${errorMessage}`,
+              index
+            )
+            break
+          default:
+            console.warn(
+              `No posting error logger defined for contentType: ${contentType}`
+            )
+            break
         }
         return { success: false, existing: isExisting, error: errorMessage }
       }
@@ -441,7 +553,6 @@ const processBatch = async (contentType, oldData) => {
 // ============================================
 // MAIN MIGRATION FUNCTION
 // ============================================
-
 export const migrateData = async (
   contentType,
   queryType = 'test',
@@ -563,16 +674,21 @@ export const migrateData = async (
     console.log(`\n${'='.repeat(60)}`)
     console.log('🎉 MIGRATION COMPLETED!')
     console.log('='.repeat(60))
-    console.log(`✅ Total Successful Migrations: ${overallSuccessCount}`)
-    console.log(`⚠️ Total Existing in Webiny: ${overallExistingCount}`)
-    console.log(`❌ Total Failed Migrations: ${overallErrorCount}`)
+    console.log(`✅ TOTAL SUCCESSFUL MIGRATIONS: ${overallSuccessCount}`)
+    console.log(`⚠️ TOTAL EXISTING IN WEBINY: ${overallExistingCount}`)
+    console.log(`❌ TOTAL FAILED MIGRATIONS: ${overallErrorCount}`)
     console.log(
-      `📊 Total Processed: ${
+      `📊 TOTAL PROCESSED: ${
         overallSuccessCount + overallErrorCount + overallExistingCount
       }`
     )
-    console.log(`📊 Total Existing Migrations: ${totalRecords}`)
-
+    console.log(`📊 TOTAL AVAILABLE MIGRATIONS: ${totalRecords}`)
+    console.log(
+      `📋 ITEMS NEEDING PROCESSING: ${
+        totalRecords -
+        (overallSuccessCount + overallErrorCount + overallExistingCount)
+      }`
+    )
     return {
       successCount: overallSuccessCount,
       errorCount: overallErrorCount,
