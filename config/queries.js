@@ -80,6 +80,41 @@ const queries = {
       WHERE c.id IN (35695, 27247, 22322, 27000, 26844)
     `,
   },
+
+  // VIDEOS
+  videos: {
+    test: ` 
+     SELECT c.*, cv.subverticalid, cv.verticalid
+      FROM contents c
+      LEFT JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE c.id in (8156, 8171 ,8157,8159)
+
+    `,
+    batch: `
+      SELECT DISTINCT c.*, cv.subverticalid, cv.verticalid
+      FROM contents c
+      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE cv.verticalid = 7
+      ORDER BY c.id
+      OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
+    `,
+    all: `
+      SELECT c.*, cv.subverticalid, cv.verticalid
+      FROM contents c
+      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE cv.verticalid = 7
+      AND c.type = 5
+      AND c.status = 'Published'
+      ORDER BY c.id
+      OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+    `,
+    custom: `
+      SELECT c.*, cv.subverticalid, cv.verticalid
+      FROM contents c
+      INNER JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE c.id IN (35695, 27247, 22322, 27000, 26844)
+    `,
+  },
 }
 
 export default queries
