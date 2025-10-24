@@ -21,7 +21,7 @@ async function countFilesInFolder(folderPath) {
 }
 
 // Example usage:
-const folderPath = 'assets/thumbnails' // Change this to your folder
+const folderPath = 'assets/imagesFinale' // Change this to your folder
 
 countFilesInFolder(folderPath)
   .then((count) => console.log(`Number of files: ${count}`))

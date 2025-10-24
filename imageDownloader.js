@@ -13,8 +13,11 @@ const query = `
   INNER JOIN contents_vertical cv ON c.id = cv.contentid
   WHERE cv.verticalid = 7
 `
+// ==================================================
+//  CRITICAL CONFIGURATION -> USE imagesFinale FOLDER
+// ==================================================
 // const folderPath = 'assets/images'
-const baseImageUrl = './assets/thumbnails'
+const baseImageUrl = './assets/imagesFinale' // this contains already downloaded images "20291 items"
 const IMAGE_MAPPING_FILE = 'image-mapping.json' // Store the mapping
 
 // Load existing mapping or create new one
@@ -170,6 +173,22 @@ export async function uploadToWebiny(
 
     // Extract the media file ID from response
     const mediaFileId = response.data.mediaFile?.id
+
+    // NEW: Save the mapping after successful upload
+    if (mediaFileId) {
+      const mapping = loadImageMapping()
+      const key = decodedFileName.toLowerCase()
+      if (!mapping[key]) {
+        // Only save if not already present (extra safety)
+        mapping[key] = mediaFileId
+        saveImageMapping(mapping)
+        console.log(`💾 Saved new mapping for ${key}: ${mediaFileId}`)
+      } else {
+        console.log(`⏭️ Mapping for ${key} already exists, skipping save`)
+      }
+    } else {
+      console.warn(`⚠️ No mediaFileId in response, skipping mapping save`)
+    }
 
     // console.log('gere', response)
     return {

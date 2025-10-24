@@ -4,20 +4,20 @@ import axios from 'axios'
 import sql from 'msnodesqlv8'
 import config from '../config/index.js'
 
-const query = `SELECT DISTINCT c.thumbnail
+const query = `SELECT DISTINCT c.image
   FROM contents c
   INNER JOIN contents_vertical cv ON c.id = cv.contentid
   WHERE cv.verticalid = 7
-    AND c.thumbnail IS NOT NULL
-    AND c.thumbnail <> ''
-    AND c.thumbnail <> '/'
-  ORDER BY c.thumbnail
+    AND c.image IS NOT NULL
+    AND c.image <> ''
+    AND c.image <> '/'
+  ORDER BY c.image
   OFFSET [offsetValue] ROWS FETCH NEXT 100 ROWS ONLY;`
 
-const folderPath = 'assets/thumbnails'
+const folderPath = 'assets/imagesFinale'
 const baseImageUrl = 'https://1cms-img.imgix.net'
-const errorLogPath = 'thumbnail_error.txt'
-const downloadLogPath = 'thumbnail_download_log.txt'
+const errorLogPath = 'image_error.txt'
+const downloadLogPath = 'image_download_log.txt'
 
 // Decode URL encoding and remove query parameters
 function cleanFileName(fileName) {
@@ -124,14 +124,14 @@ async function getImages(targetBatch = null, startBatch = 0, endBatch = 203) {
       fs.unlinkSync(downloadLogPath)
     }
 
-    // Track unique thumbnails
-    const uniqueThumbnails = new Set()
-    let totalValidThumbnails = 0
-    let totalInvalidThumbnails = 0
+    // Track unique images
+    const uniqueImages = new Set()
+    let totalValidImages = 0
+    let totalInvalidImages = 0
 
     const queries = []
 
-    // Process 204 batches (20,292 distinct thumbnails / 100 ≈ 203.92)
+    // Process 204 batches (20,292 distinct images / 100 ≈ 203.92)
     for (let i = startBatch; i <= endBatch; i++) {
       const offset = i * 100
       const currentQuery = query.replace('[offsetValue]', offset)
@@ -149,32 +149,32 @@ async function getImages(targetBatch = null, startBatch = 0, endBatch = 203) {
               resolve([])
             } else {
               let invalidCount = 0
-              const validThumbnails = results
+              const validImages = results
                 .map((item, index) => {
                   if (
-                    !item.thumbnail ||
-                    item.thumbnail.trim() === '' ||
-                    item.thumbnail === '/'
+                    !item.image ||
+                    item.image.trim() === '' ||
+                    item.image === '/'
                   ) {
                     logToFile(
-                      `Batch ${i}, row ${index}: Invalid thumbnail value: ${item.thumbnail}`,
+                      `Batch ${i}, row ${index}: Invalid image value: ${item.image}`,
                       errorLogPath
                     )
                     invalidCount++
                     return null
                   }
-                  uniqueThumbnails.add(item.thumbnail) // No duplicate check needed with DISTINCT
-                  return item.thumbnail
+                  uniqueImages.add(item.image) // No duplicate check needed with DISTINCT
+                  return item.image
                 })
                 .filter((item) => item !== null)
-              totalValidThumbnails += validThumbnails.length
-              totalInvalidThumbnails += invalidCount
+              totalValidImages += validImages.length
+              totalInvalidImages += invalidCount
               logToFile(
-                `Batch ${i} summary: ${validThumbnails.length} valid thumbnails, ${invalidCount} invalid thumbnails`,
+                `Batch ${i} summary: ${validImages.length} valid images, ${invalidCount} invalid images`,
                 errorLogPath
               )
-              console.log(`Batch ${i} thumbnails:`, validThumbnails)
-              resolve(validThumbnails)
+              console.log(`Batch ${i} images:`, validImages)
+              resolve(validImages)
             }
           })
         })
@@ -184,19 +184,17 @@ async function getImages(targetBatch = null, startBatch = 0, endBatch = 203) {
     const res = await Promise.all(queries)
     console.log('Number of batches to process:', res.length)
     logToFile(
-      `Total valid thumbnails: ${totalValidThumbnails}, Total invalid thumbnails: ${totalInvalidThumbnails}, Unique thumbnails: ${uniqueThumbnails.size}`,
+      `Total valid images: ${totalValidImages}, Total invalid images: ${totalInvalidImages}, Unique images: ${uniqueImages.size}`,
       errorLogPath
     )
 
     let counter = startBatch
-    for await (const batchThumbnails of res) {
+    for await (const batchImages of res) {
       console.log('Downloading batch number:', counter)
-      if (!batchThumbnails.length) {
-        console.log(`Batch ${counter} has no thumbnails to download`)
+      if (!batchImages.length) {
+        console.log(`Batch ${counter} has no images to download`)
       } else {
-        const queries = batchThumbnails.map((thumbnail) =>
-          downloadImage(thumbnail)
-        )
+        const queries = batchImages.map((image) => downloadImage(image))
         await Promise.all(queries)
           .then(() => console.log('Batch done number:', counter))
           .catch((err) => {
@@ -215,15 +213,15 @@ async function getImages(targetBatch = null, startBatch = 0, endBatch = 203) {
       ? fs.readdirSync(folderPath).length
       : 0
     logToFile(
-      `Final summary: ${totalValidThumbnails} valid thumbnails processed, ${uniqueThumbnails.size} unique thumbnails, ${downloadedFiles} files downloaded`,
+      `Final summary: ${totalValidImages} valid images processed, ${uniqueImages.size} unique images, ${downloadedFiles} files downloaded`,
       errorLogPath
     )
 
     // Check for missing downloads
-    if (downloadedFiles < uniqueThumbnails.size) {
+    if (downloadedFiles < uniqueImages.size) {
       console.warn(
         `Missing ${
-          uniqueThumbnails.size - downloadedFiles
+          uniqueImages.size - downloadedFiles
         } downloads. Check ${errorLogPath} for failures.`
       )
     }

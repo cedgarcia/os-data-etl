@@ -87,6 +87,10 @@ export async function mapArticle(oldArticle) {
 
       try {
         console.log(`📤 Uploading image: ${decodedFileName}`)
+
+        // ======================================
+        //  CRITICAL CHANGE: Use image field for image upload / not thumbnail
+        // ======================================
         const res = await uploadToWebiny(oldArticle.image, caption)
         mediaFileId = res.mediaFileId
         console.log(
