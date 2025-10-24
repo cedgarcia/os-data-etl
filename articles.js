@@ -13,7 +13,7 @@ const main = async () => {
 
     console.log('✅ Mappings refreshed, starting article migration...')
 
-    await migrateData('articles', 'all', { batchSize: 10, maxBatches: 10 })
+    await migrateData('articles', 'all', { batchSize: 10, maxBatches: 16 })
   } catch (error) {
     console.error('💥 Articles migration failed:', error)
     process.exit(1)

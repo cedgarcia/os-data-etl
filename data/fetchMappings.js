@@ -96,7 +96,7 @@ export const fetchMappings = async () => {
           if (mssqlId) {
             mappings.categoryMap[mssqlId] = item.id
           } else {
-            console.warn(`⚠️ No MSSQL ID mapping for category: ${item.name}`)
+            // console.warn(`⚠️ No MSSQL ID mapping for category: ${item.name}`)
           }
         })
       ),
@@ -120,19 +120,19 @@ export const fetchMappings = async () => {
           if (mssqlId) {
             mappings.leagueMap[mssqlId] = item.id
           } else {
-            console.warn(`⚠️ No MSSQL ID mapping for league: ${item.name}`)
+            // console.warn(`⚠️ No MSSQL ID mapping for league: ${item.name}`)
           }
         })
       ),
       limit(() =>
         fetchAndProcess(apiEndpoints.roles, 'roles', (item) => {
           if (!item.id || !item.name) {
-            console.warn(`⚠️ Skipping role with missing id or name:`, item)
+            // console.warn(`⚠️ Skipping role with missing id or name:`, item)
             return
           }
           // Map role name to ID for easy lookup
           mappings.roleMap[item.name] = item.id
-          console.log(`📌 Mapped role: ${item.name} -> ${item.id}`)
+          // console.log(`📌 Mapped role: ${item.name} -> ${item.id}`)
         })
       ),
       limit(() =>
@@ -144,7 +144,7 @@ export const fetchMappings = async () => {
           // Map by firstName (which is the author name from your migration)
           const authorName = item.firstName || ''
           mappings.usersMap[authorName] = item.id
-          console.log(`📌 Mapped user: "${authorName}" -> ${item.id}`)
+          // console.log(`📌 Mapped user: "${authorName}" -> ${item.id}`)
         })
       ),
     ])
