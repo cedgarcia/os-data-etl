@@ -236,6 +236,49 @@ const readDatabaseQuery = async (
 }
 
 // ============================================
+// CHECK EXISTING IN WEBINY (NEW FUNCTION FOR ARTICLES)
+// ============================================
+const checkContentExists = async (legacyId) => {
+  try {
+    const query = {
+      where: {
+        _and: [
+          { field: 'deletedOn', value: null },
+          { field: 'legacyId', value: String(legacyId) },
+        ],
+      },
+      columns: ['id'],
+      limit: 1,
+    }
+    const encodedQ = encodeURIComponent(JSON.stringify(query))
+    const endpoint = `${config.api.baseUrl}/api/contents?q=${encodedQ}`
+    const response = await axios.get(endpoint, {
+      headers: config.api.headers,
+    })
+
+    let dataArray = []
+    if (Array.isArray(response.data.list)) {
+      dataArray = response.data.list
+    } else if (Array.isArray(response.data.data)) {
+      dataArray = response.data.data
+    } else if (Array.isArray(response.data.items)) {
+      dataArray = response.data.items
+    } else if (Array.isArray(response.data)) {
+      dataArray = response.data
+    }
+
+    return dataArray.length > 0
+  } catch (error) {
+    console.error(
+      `❌ Error checking content existence for legacyId ${legacyId}:`,
+      error.message
+    )
+    // Assume it does not exist if check fails, to avoid skipping due to error
+    return false
+  }
+}
+
+// ============================================
 // DATA MAPPING AND POSTING
 // ============================================
 
@@ -443,6 +486,23 @@ const processBatch = async (contentType, oldData) => {
         return { success: false, error }
       }
 
+      // NEW: Check if legacyId already exists in Webiny for articles
+      let isExisting = false
+      if (contentType === 'articles' && newItem.legacyId) {
+        const exists = await checkContentExists(newItem.legacyId)
+        if (exists) {
+          console.warn(
+            `⚠️ Article ${oldItem.id} already exists in Webiny (legacyId: ${newItem.legacyId})`
+          )
+          isExisting = true
+          return {
+            success: false,
+            existing: true,
+            error: 'Already exists in Webiny',
+          }
+        }
+      }
+
       try {
         const postResult = await postData(contentType, oldItem, newItem)
         if (postResult) {
@@ -497,7 +557,7 @@ const processBatch = async (contentType, oldData) => {
         }
       } catch (error) {
         let errorMessage = error.message
-        let isExisting = error.type === 'duplicate'
+        isExisting = error.type === 'duplicate'
         if (
           !isExisting &&
           error.response?.data?.message?.includes('already exists')
