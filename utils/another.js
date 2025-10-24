@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import axios from 'axios'
 import sql from 'msnodesqlv8'
-import config from './config/index.js'
+import config from '../config/index.js'
 
 const query = `SELECT DISTINCT c.thumbnail
   FROM contents c
