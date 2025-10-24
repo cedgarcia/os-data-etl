@@ -15,10 +15,7 @@ export const fetchMappings = async () => {
     websites: `${config.api.baseUrl}/api/websites?q=%7B%22where%22%3A%7B%22_and%22%3A%5B%7B%22field%22%3A%22deletedOn%22%2C%22value%22%3Anull%7D%5D%7D%2C%22columns%22%3A%5B%22name%22%5D%7D`,
     categories: `${config.api.baseUrl}/api/categories?q=%7B%22where%22%3A%7B%22_and%22%3A%5B%7B%22field%22%3A%22deletedOn%22%2C%22value%22%3Anull%7D%5D%7D%2C%22columns%22%3A%5B%22name%22%5D%7D`,
     leagues: `${config.api.baseUrl}/api/leagues?q=%7B%22where%22%3A%7B%22_and%22%3A%5B%7B%22field%22%3A%22deletedOn%22%2C%22value%22%3Anull%7D%5D%7D%2C%22columns%22%3A%5B%22name%22%5D%7D`,
-
-    // roles: `${config.api.baseUrl}/api/roles?q=%7B%22where%22:%7B%22_and%22:%5B%7B%22field%22:%22deletedOn%22,%22value%22:null%7D%5D%7D,%22columns%22:%5B%22id%22,%22name%22,%22permissions%22,%22website+%7B%5Cn++++++++++++id,%5Cn++++++++++++name%5Cn++++++++++%7D%22%5D,%22sort%22:%7B%22field%22:%22createdOn%22,%22value%22:%22desc%22%7D%7D`,
     roles: `${config.api.baseUrl}/api/roles?q=%7B%22where%22:%7B%22_and%22:%5B%7B%22field%22:%22deletedOn%22,%22value%22:null%7D%5D%7D,%22columns%22:%5B%22id%22,%22name%22,%22permissions%22,%22website+%7B%5Cn++++++++++++id,%5Cn++++++++++++name%5Cn++++++++++%7D%22%5D,%22sort%22:%7B%22field%22:%22createdOn%22,%22value%22:%22desc%22%7D%7D`,
-
     users: `${config.api.baseUrl}/api/users?q=%7B%22where%22%3A%7B%22_and%22%3A%5B%7B%22field%22%3A%22deletedOn%22%2C%22value%22%3Anull%7D%5D%7D%2C%22columns%22%3A%5B%22firstName%22%5D%7D`,
   }
 
