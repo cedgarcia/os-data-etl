@@ -1,8 +1,9 @@
 ### STEPS
 
 1. run node another.js(for downloading images to local)
+2. run node countFile.js(to check if you downloaded all images) -> this should output "20291"
 
-running migration scripts
+### running migration scripts step by step
 
 1. run node leagues (to migrate leagues)
 2. run node categories (to migrate categories)
