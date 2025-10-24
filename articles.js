@@ -8,12 +8,12 @@ const main = async () => {
 
     // Force refresh mappings to get all migrated users
     // console.log('📋 Refreshing mappings to include all migrated users...')
-    clearMappingsCache() // Clear the cache first
-    await refreshMappings() // Then refresh all mappings including usersMap
+    // clearMappingsCache() // Clear the cache first
+    // await refreshMappings() // Then refresh all mappings including usersMap
 
     console.log('✅ Mappings refreshed, starting article migration...')
 
-    await migrateData('articles', 'all', { batchSize: 10, maxBatches: 16 })
+    await migrateData('articles', 'all', { batchSize: 10, maxBatches: 20 })
   } catch (error) {
     console.error('💥 Articles migration failed:', error)
     process.exit(1)

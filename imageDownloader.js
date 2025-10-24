@@ -85,13 +85,22 @@ export async function uploadToWebiny(
   try {
     console.log(`📤 Uploading: ${fileName}`)
 
-    const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports"
-    const addedById = usersMap['One'] || defaultUserId // Use authorsMap for dynamic mapping
+    // LOCAL ENVIRONMENT
+    // const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
+
+    // DEV ENVIRONMENT
+    // const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports" user
+
+    // TEST ENVIRONMENT
+    // const defaultUserId = '689579a9720a4d0002a21f3a#0013' // Fallback ID for "One Sports" user
+
+    const addedById = usersMap['One']
 
     if (!usersMap['One']) {
       console.warn(
-        `⚠️ No authorsMap entry for "One", using fallback ID: ${defaultUserId}`
+        `⚠️ No authorsMap entry for "One", skipping upload for image ${fileName}`
       )
+      throw new Error(`No authorsMap entry for "One"`)
     }
 
     const { buffer, contentType } = await downloadImageBuffer(fileName)
@@ -177,107 +186,3 @@ export async function uploadToWebiny(
     throw error
   }
 }
-
-// Function to get images from database and upload them
-// async function migrateImages() {
-//   try {
-//     const queries = []
-//     const connectionString = config.database.connectionString
-
-//     // Load existing mapping
-//     const imageMapping = loadImageMapping()
-
-//     // Process 2 batches of 5 images each
-//     for (let i = 0; i < 2; i++) {
-//       const offset = i * 100
-//       const currentQuery = query.replace('[offsetValue]', offset)
-
-//       queries.push(
-//         new Promise((resolve, reject) => {
-//           sql.query(connectionString, currentQuery, (err, results) => {
-//             if (err) {
-//               reject(err)
-//             } else {
-//               resolve(
-//                 results.map((item) => ({
-//                   fileName: encodeURIComponent(item.image),
-//                   caption:
-//                     item.caption && item.caption.trim()
-//                       ? item.caption.trim()
-//                       : ' ',
-//                 }))
-//               )
-//             }
-//           })
-//         })
-//       )
-//     }
-
-//     const res = await Promise.all(queries)
-//     console.log(`📊 Total batches: ${res.length}`)
-
-//     let counter = 1
-//     let totalSuccess = 0
-//     let totalErrors = 0
-
-//     for await (const batchImages of res) {
-//       console.log(`\n🔄 Processing batch ${counter}/${res.length}`)
-//       console.log(`📦 Images in batch: ${batchImages.length}`)
-
-//       for (const { fileName, caption } of batchImages) {
-//         try {
-//           const decodedFileName = decodeURIComponent(fileName)
-
-//           // Skip if already uploaded
-//           // if (imageMapping[decodedFileName]) {
-//           //   console.log(`⏭️  Skipping (already uploaded): ${decodedFileName}`)
-//           //   totalSuccess++
-//           //   continue
-//           // }
-
-//           const result = await uploadToWebiny(fileName, caption)
-//           console.log('result:', result)
-
-//           // Store the mapping: original filename -> Webiny media file ID
-//           if (result.mediaFileId) {
-//             imageMapping[result.fileName] = result.mediaFileId
-//             console.log(
-//               `💾 Mapped: ${result.fileName} -> ${result.mediaFileId}`
-//             )
-//           }
-
-//           totalSuccess++
-
-//           // Small delay to avoid overwhelming the API
-//           await new Promise((resolve) => setTimeout(resolve, 500))
-//         } catch (error) {
-//           totalErrors++
-//           console.error(`Error uploading ${fileName}:`, error.message)
-//         }
-//       }
-
-//       console.log(`✅ Batch ${counter} completed`)
-//       counter++
-//     }
-
-//     // Save the mapping after all uploads
-//     saveImageMapping(imageMapping)
-
-//     console.log('\n🎉 Migration completed!')
-//     console.log(`✅ Success: ${totalSuccess}`)
-//     console.log(`❌ Errors: ${totalErrors}`)
-//     console.log(`📊 Total: ${totalSuccess + totalErrors}`)
-//   } catch (error) {
-//     console.error('💥 Migration failed:', error)
-//     throw error
-//   }
-// }
-
-// // Export function to get media file ID by filename
-// export function getMediaFileIdByFilename(filename) {
-//   const mapping = loadImageMapping()
-//   return mapping[filename] || null
-// }
-
-// Run the migration
-// migrateImages()

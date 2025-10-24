@@ -16,10 +16,17 @@ export async function mapArticle(oldArticle) {
   // const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports" user
 
   //TEST ENVIRONMENT
-  const defaultUserId = '689579a9720a4d0002a21f3a#0012' // Fallback ID for "One Sports" user
+  // const defaultUserId = '689579a9720a4d0002a21f3a#0012' // Fallback ID for "One Sports" user
 
   // Map the author field from the article to the corresponding migrated user
-  let addedById = defaultUserId // Start with default
+  let addedById = usersMap['One'] // Start with default
+
+  if (!usersMap['One']) {
+    console.warn(
+      `⚠️ No usersMap entry for "One", skipping mapping for article ${oldArticle.id}`
+    )
+    return null
+  }
 
   // if (oldArticle.author && typeof oldArticle.author === 'string') {
   //   const authorName = oldArticle.author.trim()
