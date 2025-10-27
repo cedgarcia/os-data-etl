@@ -512,3 +512,92 @@ export const logFailedUser = async (oldItem, errorMsg, index) => {
     })
   })
 }
+
+// ============================================
+// LOGGING FUNCTIONS FOR VIDEOS
+// ============================================
+
+export const logSuccessVideo = async (oldItem, webinyData) => {
+  const connectionString = config.database.connectionString
+  const webinyId = webinyData?.story?.id || null
+
+  const query = `
+    INSERT INTO success_migration_videos 
+    (id, title, description, intro, slug, webinyid)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.title || null,
+    oldItem.description || null,
+    oldItem.intro || null,
+    oldItem.slug || null,
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        if (
+          err.message.includes('Violation of PRIMARY KEY') ||
+          err.message.includes('duplicate')
+        ) {
+          console.warn(`DUPLICATE RECORD: Video ${oldItem.id} already logged`)
+          reject({ type: 'duplicate', message: err.message })
+        } else {
+          console.error(
+            `Failed to log success for video ${oldItem.id}:`,
+            err.message
+          )
+          reject({ type: 'error', message: err.message })
+        }
+      } else {
+        console.log(
+          `Logged successful video ${oldItem.id} – WebinyID: ${webinyId}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+export const logFailedVideo = async (oldItem, errorMsg) => {
+  const connectionString = config.database.connectionString
+
+  const columns = [
+    'id',
+    'title',
+    'description',
+    'intro',
+    'slug',
+    'videolink',
+    'error_message',
+  ]
+  const placeholders = columns.map(() => '?').join(', ')
+  const query = `INSERT INTO failed_migration_videos (${columns.join(
+    ', '
+  )}) VALUES (${placeholders})`
+
+  const params = [
+    oldItem.id,
+    oldItem.title ?? null,
+    oldItem.description ?? null,
+    oldItem.intro ?? null,
+    oldItem.slug ?? null,
+    oldItem.videolink ?? null,
+    errorMsg,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(`Failed to log failed video ${oldItem.id}:`, err.message)
+        reject(err)
+      } else {
+        console.log(`Logged failed video ${oldItem.id}: ${errorMsg}`)
+        resolve(results)
+      }
+    })
+  })
+}
