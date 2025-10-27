@@ -136,7 +136,7 @@ export async function mapArticle(oldArticle) {
     leagueId: leagueMap[oldArticle.subverticalid] || null,
     websiteId: websiteMap[oldArticle.verticalid] || null,
     contentBlock: oldArticle.contentBlock || null,
-    body: cleanArticleBody(oldArticle.body) || null,
+    body: ' ',
     settings: null,
     publishedAt: oldArticle.post || null,
     author: {
