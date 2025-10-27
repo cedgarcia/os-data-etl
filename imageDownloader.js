@@ -122,8 +122,8 @@ export async function uploadToWebiny(
     formData.append(
       'data[0]',
       JSON.stringify({
-        type: 'story',
-        aliases: [`files/story/${decodedFileName}`],
+        type: 'photo',
+        aliases: [`files/photo/${decodedFileName}`],
         caption: caption,
         addedById,
         info: {
