@@ -1,6 +1,7 @@
-// countFiles.mjs
 import fs from 'fs'
 import path from 'path'
+
+const folderPath = 'assets/complete-images'
 
 async function countFilesInFolder(folderPath) {
   return new Promise((resolve, reject) => {
@@ -20,9 +21,10 @@ async function countFilesInFolder(folderPath) {
   })
 }
 
-// Example usage:
-const folderPath = 'assets/imagesFinale' // Change this to your folder
-
 countFilesInFolder(folderPath)
-  .then((count) => console.log(`Number of files: ${count}`))
+  .then((count) =>
+    console.log(
+      `COUNT OF IMAGES DOWNLOADED (in the "assets/complete-images" folder): ✅ ${count}`
+    )
+  )
   .catch((err) => console.error('Error:', err))

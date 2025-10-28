@@ -22,7 +22,7 @@ export async function mapVideo(oldVideo) {
     title: oldVideo.title || '',
     lede: oldVideo.description || '',
     story: cleanArticleBody(oldVideo.body || ''),
-    type: 'video', // Webiny expects “video”
+    type: 'video',
     status: 'publish',
     slug: oldVideo.slug || '',
     addedById,
@@ -30,7 +30,7 @@ export async function mapVideo(oldVideo) {
     leagueId: leagueMap[oldVideo.subverticalid] || null,
     websiteId: websiteMap[oldVideo.verticalid] || null,
     publishedAt: oldVideo.post || null,
-    urls: [videoUrl], // <-- the only real difference
+    urls: [],
     author: {
       name: oldVideo.author || '',
     },

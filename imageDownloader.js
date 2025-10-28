@@ -5,7 +5,7 @@ import sql from 'msnodesqlv8'
 import FormData from 'form-data'
 import sizeOf from 'image-size'
 import config from './config/index.js'
-import { usersMap } from './data/mappings.js' // Import authorsMap
+import { usersMap } from './data/mappings.js'
 
 const query = `
   SELECT c.image, c.caption
@@ -17,8 +17,8 @@ const query = `
 //  CRITICAL CONFIGURATION -> USE imagesFinale FOLDER
 // ==================================================
 // const folderPath = 'assets/images'
-const baseImageUrl = './assets/imagesFinale' // this contains already downloaded images "20291 items"
-const IMAGE_MAPPING_FILE = 'image-mapping.json' // Store the mapping
+const baseImageUrl = './assets/complete-images' // this contains already downloaded images "20291 items"
+const IMAGE_MAPPING_FILE = 'image-mapping-test.json' // Store the mapping
 
 // Load existing mapping or create new one
 function loadImageMapping() {
@@ -150,7 +150,7 @@ export async function uploadToWebiny(
           height: dimensions.height,
           width: dimensions.width,
         },
-        urls: [''],
+        urls: [],
       })
     )
 

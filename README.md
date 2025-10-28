@@ -1,7 +1,7 @@
 ### STEPS
 
-1. run node another.js(for downloading images to local)
-2. run node countFile.js(to check if you downloaded all images) -> this should output "20291"
+1. run node utils/imageDownloader.js(for downloading images to local) -> images will be downloaded on 'assets/complete-images' folder
+2. run node utils/countImages.js(to check if you downloaded all images) -> this should output "20291"
 
 ### running migration scripts step by step
 

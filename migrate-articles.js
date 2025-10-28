@@ -1,17 +1,17 @@
-// videos.js   (copy articles.js and rename)
 import { migrateData } from './index.js'
 import { clearMappingsCache } from './data/fetchMappings.js'
 import { refreshMappings } from './data/mappings.js'
 
 const main = async () => {
   try {
-    console.log('Starting VIDEO migration...')
+    console.log('Starting articles migration...')
     clearMappingsCache()
     await refreshMappings()
+    console.log('Mappings refreshed.')
 
-    await migrateData('videos', 'all', { batchSize: 5, maxBatches: null })
+    await migrateData('articles', 'all', { batchSize: 2, maxBatches: 1 })
   } catch (error) {
-    console.error('VIDEO migration failed:', error)
+    console.error('Articles migration failed:', error)
     process.exit(1)
   }
 }

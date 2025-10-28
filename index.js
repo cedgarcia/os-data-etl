@@ -32,6 +32,7 @@ import {
   mapSponsor,
   mapUser,
   mapLeague,
+  mapVideo,
 } from './data/index.js'
 
 import { CONTENT_CONFIGS } from './utils/constants.js'
@@ -108,9 +109,9 @@ export const postContent = async (oldData, newData) => {
   return postToWebiny(oldData, newData, 'contents')
 }
 
-// export const postVideo= async (oldData, newData) => {
-//   return postToWebiny(oldData, newData, 'videos')
-// }
+export const postVideo = async (oldData, newData) => {
+  return postToWebiny(oldData, newData, 'videos')
+}
 
 // ============================================
 // DATABASE QUERY FUNCTIONS
@@ -151,14 +152,14 @@ const getTotalCount = async (contentType) => {
         `
         break
 
-      // case 'videos':
-      //   countQuery = `
-      //     SELECT COUNT(DISTINCT c.id) as total
-      //     FROM contents c
-      //     INNER JOIN contents_vertical cv ON c.id = cv.contentid
-      //     WHERE cv.verticalid = 7 and type = 5 and status = 'Published'
-      //   `
-      //   break
+      case 'videos':
+        countQuery = `
+          SELECT COUNT(DISTINCT c.id) as total
+          FROM contents c
+          INNER JOIN contents_vertical cv ON c.id = cv.contentid
+          WHERE cv.verticalid = 7 and type = 5 and status = 'Published'
+        `
+        break
 
       default:
         countQuery = `SELECT COUNT(*) as total FROM ${contentType}`
@@ -296,8 +297,8 @@ const mapData = async (contentType, data) => {
       return await Promise.all(data.map(async (item) => mapSponsor(item)))
     case 'articles':
       return await Promise.all(data.map(async (item) => mapArticle(item)))
-    // case 'videos':
-    //   return await Promise.all(data.map(async (item) => mapVideo(item)))
+    case 'videos':
+      return await Promise.all(data.map(async (item) => mapVideo(item)))
     case 'websites':
       return data
     default:
@@ -330,7 +331,12 @@ const postData = async (contentType, oldItem, newItem) => {
 // PROCESS BATCH WITH LOGGING
 // ============================================
 
-const processBatch = async (contentType, oldData) => {
+const processBatch = async (
+  contentType,
+  oldData,
+  batchNumber,
+  totalBatches
+) => {
   let successCount = 0
   let errorCount = 0
   let existingCount = 0
@@ -339,7 +345,7 @@ const processBatch = async (contentType, oldData) => {
   const limit = pLimit(10)
 
   // Check for already migrated records
-  const connectionString = config.database.connectionString
+  const connectionString = config.database.logConnectionString
   let checkExistingQuery
 
   switch (contentType) {
@@ -372,12 +378,12 @@ const processBatch = async (contentType, oldData) => {
         SELECT id FROM success_migration_articles 
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
-    // case 'videos':
-    //   checkExistingQuery = `
-    //     SELECT id FROM success_migration_videos
-    //     WHERE id IN (${oldData.map(() => '?').join(', ')})
-    //   `
-    //   break
+    case 'videos':
+      checkExistingQuery = `
+        SELECT id FROM success_migration_videos
+        WHERE id IN (${oldData.map(() => '?').join(', ')})
+      `
+      break
     default:
       checkExistingQuery = `
         SELECT id FROM success_migration_${contentType} 
@@ -417,12 +423,10 @@ const processBatch = async (contentType, oldData) => {
         contentType === 'users' ? item.distinct_author_count : item.id
       )
   )
+
+  const skippedCount = oldData.length - dataToProcess.length
   console.log(
-    `📊 Processing ${dataToProcess.length} of ${
-      oldData.length
-    } ${contentType} records (skipped ${
-      oldData.length - dataToProcess.length
-    } already migrated)`
+    `📊 Batch ${batchNumber}/${totalBatches}: Processing ${dataToProcess.length} of ${oldData.length} ${contentType} records (${skippedCount} already migrated)`
   )
 
   // Map data concurrently
@@ -602,10 +606,15 @@ const processBatch = async (contentType, oldData) => {
   )
 
   const results = await Promise.all(postPromises)
-  successCount += results.filter((r) => r.success).length
-  errorCount += results.filter((r) => !r.success && !r.existing).length
-  existingCount += results.filter((r) => r.existing).length
-  existingCount += oldData.length - dataToProcess.length
+  successCount = results.filter((r) => r.success).length
+  errorCount = results.filter((r) => !r.success && !r.existing).length
+  existingCount = results.filter((r) => r.existing).length + skippedCount
+
+  console.log(`\n📊 Batch ${batchNumber}/${totalBatches} Summary:`)
+  console.log(`  ✅ Success: ${successCount}`)
+  console.log(`  ⚠️  Existing: ${existingCount}`)
+  console.log(`  ❌ Errors: ${errorCount}`)
+  console.log(`  📦 Total in batch: ${oldData.length}`)
 
   return { successCount, errorCount, existingCount }
 }
@@ -621,7 +630,7 @@ export const migrateData = async (
   try {
     await getMappings()
     const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
-    const limit = pLimit(2) // Process up to 2 batches concurrently
+    const limit = pLimit(1) // Process batches sequentially for better logging
 
     console.log(`\n🚀 Starting migration for ${contentType} (${queryType})`)
 
@@ -634,10 +643,14 @@ export const migrateData = async (
 
       const { successCount, errorCount, existingCount } = await processBatch(
         contentType,
-        oldData
+        oldData,
+        1,
+        1
       )
 
-      console.log(`\n🎉 ${contentType} migration completed!`)
+      console.log(`\n${'='.repeat(60)}`)
+      console.log(`🎉 ${contentType} migration completed!`)
+      console.log('='.repeat(60))
       console.log(`✅ Success: ${successCount}`)
       console.log(`⚠️ Existing in Webiny: ${existingCount}`)
       console.log(`❌ Errors: ${errorCount}`)
@@ -664,72 +677,56 @@ export const migrateData = async (
     let overallExistingCount = 0
     let currentOffset = startOffset
 
-    const batchPromises = []
+    // Process batches sequentially instead of concurrently for proper logging
     for (let batchNum = 1; batchNum <= batchesToProcess; batchNum++) {
-      batchPromises.push(
-        limit(async () => {
-          console.log(`\n${'='.repeat(60)}`)
-          console.log(
-            `📦 BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
-          )
-          console.log('='.repeat(60))
-
-          try {
-            const oldData = await readDatabaseQuery(
-              contentType,
-              queryType,
-              currentOffset,
-              batchSize
-            )
-
-            if (oldData.length === 0) {
-              console.log('⚠️ No more data, stopping...')
-              return { successCount: 0, errorCount: 0, existingCount: 0 }
-            }
-
-            console.log(`📥 Fetched ${oldData.length} records`)
-
-            const { successCount, errorCount, existingCount } =
-              await processBatch(contentType, oldData)
-
-            console.log(`\n✅ Batch ${batchNum} completed!`)
-            console.log(`  Success: ${successCount}/${oldData.length}`)
-            console.log(
-              `  Existing in Webiny: ${existingCount}/${oldData.length}`
-            )
-            console.log(`  Mapping failed: ${errorCount}/${oldData.length}`)
-            console.log(
-              `  Overall Progress: ${
-                overallSuccessCount +
-                successCount +
-                overallErrorCount +
-                errorCount +
-                overallExistingCount +
-                existingCount
-              }/${totalRecords}`
-            )
-
-            return { successCount, errorCount, existingCount }
-          } catch (error) {
-            console.error(`❌ Batch ${batchNum} failed:`, error.message)
-            return { successCount: 0, errorCount: batchSize, existingCount: 0 }
-          } finally {
-            currentOffset += batchSize
-          }
-        })
+      console.log(`\n${'='.repeat(60)}`)
+      console.log(
+        `📦 BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
       )
-    }
+      console.log('='.repeat(60))
 
-    const batchResults = await Promise.all(batchPromises)
-    overallSuccessCount = batchResults.reduce(
-      (sum, r) => sum + r.successCount,
-      0
-    )
-    overallErrorCount = batchResults.reduce((sum, r) => sum + r.errorCount, 0)
-    overallExistingCount = batchResults.reduce(
-      (sum, r) => sum + r.existingCount,
-      0
-    )
+      try {
+        const oldData = await readDatabaseQuery(
+          contentType,
+          queryType,
+          currentOffset,
+          batchSize
+        )
+
+        if (oldData.length === 0) {
+          console.log('⚠️ No more data, stopping...')
+          break
+        }
+
+        console.log(`📥 Fetched ${oldData.length} records`)
+
+        const { successCount, errorCount, existingCount } = await processBatch(
+          contentType,
+          oldData,
+          batchNum,
+          batchesToProcess
+        )
+
+        overallSuccessCount += successCount
+        overallErrorCount += errorCount
+        overallExistingCount += existingCount
+
+        console.log(`\n📈 Overall Progress:`)
+        console.log(`  ✅ Total Success: ${overallSuccessCount}`)
+        console.log(`  ⚠️  Total Existing: ${overallExistingCount}`)
+        console.log(`  ❌ Total Errors: ${overallErrorCount}`)
+        console.log(
+          `  📊 Total Processed: ${
+            overallSuccessCount + overallErrorCount + overallExistingCount
+          }/${totalRecords}`
+        )
+      } catch (error) {
+        console.error(`❌ Batch ${batchNum} failed:`, error.message)
+        overallErrorCount += batchSize
+      }
+
+      currentOffset += batchSize
+    }
 
     console.log(`\n${'='.repeat(60)}`)
     console.log('🎉 MIGRATION COMPLETED!')
@@ -749,6 +746,8 @@ export const migrateData = async (
         (overallSuccessCount + overallErrorCount + overallExistingCount)
       }`
     )
+    console.log('='.repeat(60))
+
     return {
       successCount: overallSuccessCount,
       errorCount: overallErrorCount,
