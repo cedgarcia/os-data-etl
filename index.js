@@ -18,7 +18,7 @@
  * 3. Users (contributors) ✅
  * 4. Sponsors (Cancelled)   ❌
  * 5. Articles (main content)  ✅
- * 6. Videos (Not finished yet)  ❌
+ * 6. Videos (Now fully supported)  ✅
  */
 
 import sql from 'msnodesqlv8'
@@ -62,20 +62,16 @@ const postToWebiny = async (oldData, newData, endpoint) => {
   }
 
   const API_ENDPOINT = `${config.api.baseUrl}${config.api.endpoints[endpoint]}`
-  console.log('📤 Posting to:', endpoint, '->', API_ENDPOINT)
+  console.log('Posting to:', endpoint, '->', API_ENDPOINT)
 
   try {
     const response = await axios.post(API_ENDPOINT, newData, {
       headers: config.api.headers,
     })
-    console.log('✅ Success:', endpoint, response.status)
+    console.log('Success:', endpoint, response.status)
     return response
   } catch (error) {
-    console.error(
-      '❌ API Error:',
-      endpoint,
-      error.response?.data || error.message
-    )
+    console.error('API Error:', endpoint, error.response?.data || error.message)
     if (error.response?.data?.message?.includes('already exists')) {
       throw {
         type: 'duplicate',
@@ -110,7 +106,7 @@ export const postContent = async (oldData, newData) => {
 }
 
 export const postVideo = async (oldData, newData) => {
-  return postToWebiny(oldData, newData, 'videos')
+  return postToWebiny(oldData, newData, 'contents')
 }
 
 // ============================================
@@ -218,7 +214,7 @@ const readDatabaseQuery = async (
     }
 
     console.log(
-      `📊 Executing query: ${contentType} ${queryType} (offset: ${offset}, limit: ${limit})`
+      `Executing query: ${contentType} ${queryType} (offset: ${offset}, limit: ${limit})`
     )
 
     return new Promise((resolve, reject) => {
@@ -237,7 +233,7 @@ const readDatabaseQuery = async (
 }
 
 // ============================================
-// CHECK EXISTING IN WEBINY (NEW FUNCTION FOR ARTICLES)
+// CHECK EXISTING IN WEBINY (NEW FUNCTION FOR ARTICLES & VIDEOS)
 // ============================================
 const checkContentExists = async (legacyId) => {
   try {
@@ -271,12 +267,144 @@ const checkContentExists = async (legacyId) => {
     return dataArray.length > 0
   } catch (error) {
     console.error(
-      `❌ Error checking content existence for legacyId ${legacyId}:`,
+      `Error checking content existence for legacyId ${legacyId}:`,
       error.message
     )
     // Assume it does not exist if check fails, to avoid skipping due to error
     return false
   }
+}
+
+// ============================================
+// VIDEO LOGGING FUNCTIONS (MOVED FROM loggers.js)
+// ============================================
+
+export const logSuccessVideo = async (oldItem, webinyData) => {
+  const connectionString = config.database.logConnectionString
+  const webinyId = webinyData?.story?.id || null
+
+  const query = `
+    INSERT INTO success_migration_videos 
+    (id, title, description, intro, slug, webinyid)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `
+
+  const params = [
+    oldItem.id,
+    oldItem.title || null,
+    oldItem.description || null,
+    oldItem.intro || null,
+    oldItem.slug || null,
+    webinyId,
+  ]
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        if (
+          err.message.includes('Violation of PRIMARY KEY') ||
+          err.message.includes('duplicate')
+        ) {
+          console.warn(`DUPLICATE RECORD: Video ${oldItem.id} already logged`)
+          reject({ type: 'duplicate', message: err.message })
+        } else {
+          console.error(
+            `Failed to log success for video ${oldItem.id}:`,
+            err.message
+          )
+          reject({ type: 'error', message: err.message })
+        }
+      } else {
+        console.log(
+          `Logged successful video ${oldItem.id} – WebinyID: ${webinyId}`
+        )
+        resolve(results)
+      }
+    })
+  })
+}
+
+export const logFailedVideo = async (oldItem, errorMsg) => {
+  const connectionString = config.database.logConnectionString
+
+  const columns = [
+    'id',
+    'parent',
+    'type',
+    'title',
+    'description',
+    'intro',
+    'blurb',
+    'keywords',
+    'redirect',
+    'url',
+    'body',
+    'thumbnail',
+    'image',
+    'banner',
+    'caption',
+    'post',
+    'expiry',
+    'author',
+    'sequence',
+    'visible',
+    'target',
+    'status',
+    'category',
+    'static',
+    'video',
+    'permalink',
+    'audiolink',
+    'videolink',
+    'icon',
+    'active',
+    'sponsorid',
+    'contributor',
+    'created',
+    'creator',
+    'uploaded',
+    'uploader',
+    'updated',
+    'updater',
+    'channelid',
+    'sectionid',
+    'videotype',
+    'videoid',
+    'planid',
+    'allowsearch',
+    'subscribertypeid',
+    'autoplay',
+    'showinpromo',
+    'ogimage',
+    'ogthumbnail',
+    'slug',
+    'displayonhomepage',
+    'hideadvertisement',
+    'carousel',
+    'carouselsequence',
+    'columnid',
+    'error_message',
+  ]
+
+  const placeholders = columns.map(() => '?').join(', ')
+  const query = `INSERT INTO failed_migration_videos (${columns.join(
+    ', '
+  )}) VALUES (${placeholders})`
+
+  const params = columns.slice(0, -1).map((col) => oldItem[col] ?? null)
+  params.push(errorMsg)
+
+  return new Promise((resolve, reject) => {
+    sql.query(connectionString, query, params, (err, results) => {
+      if (err) {
+        console.error(`Failed to log failed video ${oldItem.id}:`, err.message)
+        reject(err)
+      } else {
+        console.log(`Logged failed video ${oldItem.id}: ${errorMsg}`)
+        resolve(results)
+      }
+    })
+  })
 }
 
 // ============================================
@@ -305,6 +433,7 @@ const mapData = async (contentType, data) => {
       throw new Error(`No mapper found for ${contentType}`)
   }
 }
+
 const postData = async (contentType, oldItem, newItem) => {
   switch (contentType) {
     case 'leagues':
@@ -318,9 +447,9 @@ const postData = async (contentType, oldItem, newItem) => {
     case 'articles':
       return await postContent(oldItem, newItem)
     case 'videos':
-      return await postContent(oldItem, newItem)
+      return await postVideo(oldItem, newItem)
     case 'websites':
-      console.log('⚠️ Website migration not implemented yet')
+      console.log('Website migration not implemented yet')
       return null
     default:
       throw new Error(`No post function for ${contentType}`)
@@ -378,6 +507,7 @@ const processBatch = async (
         SELECT id FROM success_migration_articles 
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
+      break
     case 'videos':
       checkExistingQuery = `
         SELECT id FROM success_migration_videos
@@ -401,10 +531,7 @@ const processBatch = async (
       ),
       (err, results) => {
         if (err) {
-          console.error(
-            `❌ Error checking existing ${contentType}:`,
-            err.message
-          )
+          console.error(`Error checking existing ${contentType}:`, err.message)
           reject(err)
         } else {
           resolve(
@@ -426,7 +553,7 @@ const processBatch = async (
 
   const skippedCount = oldData.length - dataToProcess.length
   console.log(
-    `📊 Batch ${batchNumber}/${totalBatches}: Processing ${dataToProcess.length} of ${oldData.length} ${contentType} records (${skippedCount} already migrated)`
+    `Batch ${batchNumber}/${totalBatches}: Processing ${dataToProcess.length} of ${oldData.length} ${contentType} records (${skippedCount} already migrated)`
   )
 
   // Map data concurrently
@@ -437,7 +564,7 @@ const processBatch = async (
         return { oldItem, newItem: newItem[0] }
       } catch (error) {
         console.error(
-          `❌ Failed to map ${contentType} item ${index + 1}:`,
+          `Failed to map ${contentType} item ${index + 1}:`,
           error.message
         )
         switch (contentType) {
@@ -461,9 +588,8 @@ const processBatch = async (
             await logFailure(oldItem, `Mapping error: ${error.message}`)
             break
           case 'videos':
-            await logFailure(oldItem, `Mapping error: ${error.message}`)
+            await logFailedVideo(oldItem, `Mapping error: ${error.message}`)
             break
-
           default:
             console.warn(
               `No mapping error logger defined for contentType: ${contentType}`
@@ -483,20 +609,25 @@ const processBatch = async (
       const { oldItem, newItem, error } = result
       if (error) {
         console.error(
-          `❌ Skipping ${contentType} item ${
+          `Skipping ${contentType} item ${
             index + 1
           } due to mapping error: ${error}`
         )
         return { success: false, error }
       }
 
-      // NEW: Check if legacyId already exists in Webiny for articles
+      // Check if legacyId already exists in Webiny for articles and videos
       let isExisting = false
-      if (contentType === 'articles' && newItem.legacyId) {
+      if (
+        (contentType === 'articles' || contentType === 'videos') &&
+        newItem.legacyId
+      ) {
         const exists = await checkContentExists(newItem.legacyId)
         if (exists) {
           console.warn(
-            `⚠️ Article ${oldItem.id} already exists in Webiny (legacyId: ${newItem.legacyId})`
+            `${contentType === 'articles' ? 'Article' : 'Video'} ${
+              oldItem.id
+            } already exists in Webiny (legacyId: ${newItem.legacyId})`
           )
           isExisting = true
           return {
@@ -510,11 +641,8 @@ const processBatch = async (
       try {
         const postResult = await postData(contentType, oldItem, newItem)
         if (postResult) {
-          console.log(
-            `✅ Successfully migrated ${contentType} item ${index + 1}`
-          )
+          console.log(`Successfully migrated ${contentType} item ${index + 1}`)
           try {
-            // Refactor if-else to switch for success logging
             switch (contentType) {
               case 'articles':
                 await logSuccessArticle(oldItem, postResult.data)
@@ -531,6 +659,9 @@ const processBatch = async (
               case 'users':
                 await logSuccessUser(oldItem, postResult.data, index)
                 break
+              case 'videos':
+                await logSuccessVideo(oldItem, postResult.data)
+                break
               default:
                 console.warn(
                   `No success logger defined for contentType: ${contentType}`
@@ -541,7 +672,7 @@ const processBatch = async (
           } catch (logError) {
             if (logError.type === 'duplicate') {
               console.warn(
-                `⚠️ ${contentType} item ${index + 1} already exists in Webiny`
+                `${contentType} item ${index + 1} already exists in Webiny`
               )
               return {
                 success: false,
@@ -550,9 +681,7 @@ const processBatch = async (
               }
             } else {
               console.error(
-                `❌ Failed to log success for ${contentType} item ${
-                  index + 1
-                }:`,
+                `Failed to log success for ${contentType} item ${index + 1}:`,
                 logError.message
               )
               return { success: false, error: logError.message }
@@ -570,10 +699,9 @@ const processBatch = async (
           errorMessage = `Duplicate record: ${error.response.data.message}`
         }
         console.error(
-          `❌ Failed to migrate ${contentType} item ${index + 1}:`,
+          `Failed to migrate ${contentType} item ${index + 1}:`,
           errorMessage
         )
-        // Refactor if-else to switch for posting error logging
         switch (contentType) {
           case 'articles':
             await logFailure(oldItem, `Posting error: ${errorMessage}`)
@@ -594,6 +722,9 @@ const processBatch = async (
               index
             )
             break
+          case 'videos':
+            await logFailedVideo(oldItem, `Posting error: ${errorMessage}`)
+            break
           default:
             console.warn(
               `No posting error logger defined for contentType: ${contentType}`
@@ -610,11 +741,11 @@ const processBatch = async (
   errorCount = results.filter((r) => !r.success && !r.existing).length
   existingCount = results.filter((r) => r.existing).length + skippedCount
 
-  console.log(`\n📊 Batch ${batchNumber}/${totalBatches} Summary:`)
-  console.log(`  ✅ Success: ${successCount}`)
-  console.log(`  ⚠️  Existing: ${existingCount}`)
-  console.log(`  ❌ Errors: ${errorCount}`)
-  console.log(`  📦 Total in batch: ${oldData.length}`)
+  console.log(`\nBatch ${batchNumber}/${totalBatches} Summary:`)
+  console.log(`  Success: ${successCount}`)
+  console.log(`  Existing: ${existingCount}`)
+  console.log(`  Errors: ${errorCount}`)
+  console.log(`  Total in batch: ${oldData.length}`)
 
   return { successCount, errorCount, existingCount }
 }
@@ -632,12 +763,12 @@ export const migrateData = async (
     const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
     const limit = pLimit(1) // Process batches sequentially for better logging
 
-    console.log(`\n🚀 Starting migration for ${contentType} (${queryType})`)
+    console.log(`\nStarting migration for ${contentType} (${queryType})`)
 
     if (queryType === 'test' || queryType === 'custom') {
       const oldData = await readDatabaseQuery(contentType, queryType)
       if (oldData.length === 0) {
-        console.log('⚠️ No data found, skipping...')
+        console.log('No data found, skipping...')
         return { successCount: 0, errorCount: 0, existingCount: 0, total: 0 }
       }
 
@@ -649,19 +780,19 @@ export const migrateData = async (
       )
 
       console.log(`\n${'='.repeat(60)}`)
-      console.log(`🎉 ${contentType} migration completed!`)
+      console.log(`${contentType} migration completed!`)
       console.log('='.repeat(60))
-      console.log(`✅ Success: ${successCount}`)
-      console.log(`⚠️ Existing in Webiny: ${existingCount}`)
-      console.log(`❌ Errors: ${errorCount}`)
-      console.log(`📊 Total: ${oldData.length}`)
+      console.log(`Success: ${successCount}`)
+      console.log(`Existing in Webiny: ${existingCount}`)
+      console.log(`Errors: ${errorCount}`)
+      console.log(`Total: ${oldData.length}`)
 
       return { successCount, errorCount, existingCount, total: oldData.length }
     }
 
-    console.log(`📊 Fetching total count...`)
+    console.log(`Fetching total count...`)
     const totalRecords = await getTotalCount(contentType)
-    console.log(`📊 Total records to migrate: ${totalRecords}`)
+    console.log(`Total records to migrate: ${totalRecords}`)
 
     const totalBatches = Math.ceil(totalRecords / batchSize)
     const batchesToProcess = maxBatches
@@ -669,7 +800,7 @@ export const migrateData = async (
       : totalBatches
 
     console.log(
-      `📦 Will process ${batchesToProcess} batches of ${batchSize} records each`
+      `Will process ${batchesToProcess} batches of ${batchSize} records each`
     )
 
     let overallSuccessCount = 0
@@ -677,11 +808,10 @@ export const migrateData = async (
     let overallExistingCount = 0
     let currentOffset = startOffset
 
-    // Process batches sequentially instead of concurrently for proper logging
     for (let batchNum = 1; batchNum <= batchesToProcess; batchNum++) {
       console.log(`\n${'='.repeat(60)}`)
       console.log(
-        `📦 BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
+        `BATCH ${batchNum}/${batchesToProcess} (offset: ${currentOffset})`
       )
       console.log('='.repeat(60))
 
@@ -694,11 +824,11 @@ export const migrateData = async (
         )
 
         if (oldData.length === 0) {
-          console.log('⚠️ No more data, stopping...')
+          console.log('No more data, stopping...')
           break
         }
 
-        console.log(`📥 Fetched ${oldData.length} records`)
+        console.log(`Fetched ${oldData.length} records`)
 
         const { successCount, errorCount, existingCount } = await processBatch(
           contentType,
@@ -711,17 +841,17 @@ export const migrateData = async (
         overallErrorCount += errorCount
         overallExistingCount += existingCount
 
-        console.log(`\n📈 Overall Progress:`)
-        console.log(`  ✅ Total Success: ${overallSuccessCount}`)
-        console.log(`  ⚠️  Total Existing: ${overallExistingCount}`)
-        console.log(`  ❌ Total Errors: ${overallErrorCount}`)
+        console.log(`\nOverall Progress:`)
+        console.log(`  Total Success: ${overallSuccessCount}`)
+        console.log(`  Total Existing: ${overallExistingCount}`)
+        console.log(`  Total Errors: ${overallErrorCount}`)
         console.log(
-          `  📊 Total Processed: ${
+          `  Total Processed: ${
             overallSuccessCount + overallErrorCount + overallExistingCount
           }/${totalRecords}`
         )
       } catch (error) {
-        console.error(`❌ Batch ${batchNum} failed:`, error.message)
+        console.error(`Batch ${batchNum} failed:`, error.message)
         overallErrorCount += batchSize
       }
 
@@ -729,19 +859,19 @@ export const migrateData = async (
     }
 
     console.log(`\n${'='.repeat(60)}`)
-    console.log('🎉 MIGRATION COMPLETED!')
+    console.log('MIGRATION COMPLETED!')
     console.log('='.repeat(60))
-    console.log(`✅ TOTAL SUCCESSFUL MIGRATIONS: ${overallSuccessCount}`)
-    console.log(`⚠️ TOTAL EXISTING IN WEBINY: ${overallExistingCount}`)
-    console.log(`❌ TOTAL FAILED MIGRATIONS: ${overallErrorCount}`)
+    console.log(`TOTAL SUCCESSFUL MIGRATIONS: ${overallSuccessCount}`)
+    console.log(`TOTAL EXISTING IN WEBINY: ${overallExistingCount}`)
+    console.log(`TOTAL FAILED MIGRATIONS: ${overallErrorCount}`)
     console.log(
-      `📊 TOTAL PROCESSED: ${
+      `TOTAL PROCESSED: ${
         overallSuccessCount + overallErrorCount + overallExistingCount
       }`
     )
-    console.log(`📊 TOTAL AVAILABLE MIGRATIONS: ${totalRecords}`)
+    console.log(`TOTAL AVAILABLE MIGRATIONS: ${totalRecords}`)
     console.log(
-      `📋 ITEMS NEEDING PROCESSING: ${
+      `ITEMS NEEDING PROCESSING: ${
         totalRecords -
         (overallSuccessCount + overallErrorCount + overallExistingCount)
       }`
@@ -756,7 +886,7 @@ export const migrateData = async (
       totalAvailable: totalRecords,
     }
   } catch (error) {
-    console.error(`💥 Migration failed for ${contentType}:`, error)
+    console.error(`Migration failed for ${contentType}:`, error)
     throw error
   }
 }
@@ -785,9 +915,9 @@ export const migrateBatch = async (migrations = []) => {
 
 const main = async () => {
   try {
-    console.log('🏁 Starting migration process...')
+    console.log('Starting migration process...')
     console.log(
-      '📋 Available content types:',
+      'Available content types:',
       Object.keys(CONTENT_CONFIGS)
         .filter((key) => CONTENT_CONFIGS[key].queryKey)
         .join(', ')
@@ -807,10 +937,10 @@ const main = async () => {
 
     const results = await migrateBatch(migrationPlan)
 
-    console.log('\n🎊 All migrations completed!')
-    console.log('📊 Results:', JSON.stringify(results, null, 2))
+    console.log('\nAll migrations completed!')
+    console.log('Results:', JSON.stringify(results, null, 2))
   } catch (error) {
-    console.error('💥 Main execution failed:', error)
+    console.error('Main execution failed:', error)
     process.exit(1)
   }
 }

@@ -90,6 +90,7 @@ export async function mapArticle(oldArticle) {
 
         // ======================================
         //  CRITICAL CHANGE: Use image field for image upload / not thumbnail
+        //  For articles, no videoUrl is passed (null by default)
         // ======================================
         const res = await uploadToWebiny(oldArticle.image, caption)
         mediaFileId = res.mediaFileId

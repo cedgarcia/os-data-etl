@@ -18,7 +18,7 @@ const query = `
 // ==================================================
 // const folderPath = 'assets/images'
 const baseImageUrl = './assets/complete-images' // this contains already downloaded images "20291 items"
-const IMAGE_MAPPING_FILE = 'image-mapping-test.json' // Store the mapping
+const IMAGE_MAPPING_FILE = 'dev-image-mapping-test.json' // Store the mapping
 
 // Load existing mapping or create new one
 function loadImageMapping() {
@@ -81,7 +81,8 @@ export async function downloadImageBuffer(fileName) {
 // Upload image to Webiny API
 export async function uploadToWebiny(
   fileName,
-  caption = ''
+  caption = '',
+  videoUrl = null // NEW: Optional video URL parameter
   // addedById = '68ecba72ffef4e0002407de1#0003' //LOCAL
   // addedById = '68dba1c6f258460002afd595#0005' //DEV
 ) {
@@ -119,26 +120,11 @@ export async function uploadToWebiny(
       contentType: contentType || 'image/jpeg',
     })
 
-    formData.append(
-      'data[0]',
-      JSON.stringify({
-        type: 'photo',
-        aliases: [`files/photo/${decodedFileName}`],
-        caption: caption,
-        addedById,
-        info: {
-          name: decodedFileName,
-          type: contentType || 'image/jpeg',
-          size: buffer.length,
-          height: dimensions.height,
-          width: dimensions.width,
-        },
-      })
-    )
-
-    formData.append(
-      'data[1]',
-      JSON.stringify({
+    // If videoUrl is provided, create as 'video' type with urls
+    // Otherwise, create as 'photo' type
+    if (videoUrl) {
+      // For videos: only create video type with URL
+      const videoData = {
         type: 'video',
         aliases: [`files/video/${decodedFileName}`],
         caption: caption,
@@ -150,12 +136,31 @@ export async function uploadToWebiny(
           height: dimensions.height,
           width: dimensions.width,
         },
-        urls: [],
-      })
-    )
+        urls: [videoUrl], // Video URL goes here
+      }
+      formData.append('data[0]', JSON.stringify(videoData))
+      console.log(`📹 Creating media file as VIDEO type with URL: ${videoUrl}`)
+    } else {
+      // For articles: only create photo type
+      const photoData = {
+        type: 'photo',
+        aliases: [`files/photo/${decodedFileName}`],
+        caption: caption,
+        addedById,
+        info: {
+          name: decodedFileName,
+          type: contentType || 'image/jpeg',
+          size: buffer.length,
+          height: dimensions.height,
+          width: dimensions.width,
+        },
+      }
+      formData.append('data[0]', JSON.stringify(photoData))
+      console.log(`📷 Creating media file as PHOTO type`)
+    }
 
     // Upload to API
-    const columnsParam = 'image,fileName,caption,type,info,tags'
+    const columnsParam = 'image,fileName,caption,type,info,tags,urls'
     const API_ENDPOINT = `${config.api.baseUrl}${config.api.endpoints.mediaFiles}?columns=${columnsParam}`
 
     console.log(`🔗 Endpoint: ${API_ENDPOINT}`)
