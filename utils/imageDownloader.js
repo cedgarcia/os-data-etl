@@ -14,10 +14,10 @@ const query = `SELECT DISTINCT c.image
   ORDER BY c.image
   OFFSET [offsetValue] ROWS FETCH NEXT 100 ROWS ONLY;`
 
-const folderPath = 'assets/imagesFinale'
+const folderPath = 'assets/complete-images'
 const baseImageUrl = 'https://1cms-img.imgix.net'
-const errorLogPath = 'image_error.txt'
-const downloadLogPath = 'image_download_log.txt'
+const errorLogPath = 'logs/image_error_log.txt'
+const downloadLogPath = 'logs/image_download_log.txt'
 
 // Decode URL encoding and remove query parameters
 function cleanFileName(fileName) {
