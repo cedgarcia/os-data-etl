@@ -16,7 +16,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate:leagues": "node ./migrations/migrate-leagues.js",
+    "migrate:categories": "node ./migrations/migrate-categories.js",
+    "migrate:users": "node ./migrations/migrate-users.js",
+    "migrate:articles": "node ./migrations/migrate-articles.js",
+    "migrate:videos": "node ./migrations/migrate-videos.js",
+    "check:uploaded-images": "node ./utils/countImagesUploadedToWebiny.js",
+    "check:downloaded-images": "node ./utils/countImagesDownloaded.js"
   },
   "keywords": [],
   "author": "",

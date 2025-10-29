@@ -1,6 +1,6 @@
-import { migrateData } from './index.js'
-import { clearMappingsCache } from './data/fetchMappings.js'
-import { refreshMappings } from './data/mappings.js'
+import { migrateData } from '../index.js'
+import { clearMappingsCache } from '../data/fetchMappings.js'
+import { refreshMappings } from '../data/mappings.js'
 
 const main = async () => {
   try {

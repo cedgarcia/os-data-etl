@@ -6,7 +6,11 @@ import {
   usersMap,
 } from './mappings.js'
 import { cleanArticleBody } from '../utils/cleanArticleBody.js'
-import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
+// import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
+import {
+  uploadToWebiny,
+  getMediaFileIdByFilename,
+} from '../utils/mediaUploader.js'
 
 export async function mapArticle(oldArticle) {
   // LOCAL ENVIRONMENT

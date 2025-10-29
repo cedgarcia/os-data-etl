@@ -1,7 +1,7 @@
-import { migrateData } from './index.js'
-import { setEmailCounter } from './data/userDataMapper.js'
+import { migrateData } from '../index.js'
+import { setEmailCounter } from '../data/userDataMapper.js'
 import sql from 'msnodesqlv8'
-import config from './config/index.js'
+import config from '../config/index.js'
 
 const getExistingUserCount = async () => {
   const connectionString = config.database.connectionString

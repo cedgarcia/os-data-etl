@@ -18,7 +18,7 @@ const query = `
 // ==================================================
 // const folderPath = 'assets/images'
 const baseImageUrl = './assets/complete-images' // this contains already downloaded images "20291 items"
-const IMAGE_MAPPING_FILE = './logs/migrated-images-logs-dev.json' // Store the mapping
+const IMAGE_MAPPING_FILE = './logs/dev-image-uploaded.json' // Store the mapping
 
 // Load existing mapping or create new one
 function loadImageMapping() {

@@ -1,7 +1,11 @@
 ### STEPS
 
+### Setting up the MSSQL DATABASE
+
+1.
+
 1. run node utils/imageDownloader.js(for downloading images to local) -> images will be downloaded on 'assets/complete-images' folder
-2. run node utils/countImages.js(to check if you downloaded all images) -> this should output "20291"
+1. run node utils/countImages.js(to check if you downloaded all images) -> this should output "20291"
 
 ### running migration scripts step by step
 
@@ -11,3 +15,15 @@
 4. run node sponsors (to migrate sponsors) ---------------- to be discussed
 5. run node articles (to migrate articles)
 6. run node videos (to migrate videos)
+
+# SCRIPTS TO RUN
+
+### migration for articles
+
+npm run migrate:articles
+
+### migration for videos
+
+npm run migrate:videos
+
+## checkers

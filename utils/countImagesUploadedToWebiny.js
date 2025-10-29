@@ -1,7 +1,7 @@
 import fs from 'fs'
 
 // Path to your JSON file
-const filePath = './image-mapping.json'
+const filePath = './logs/dev-image-uploaded.json'
 
 try {
   // Read the file contents
@@ -13,7 +13,7 @@ try {
   // Count the keys (image names)
   const count = Object.keys(json).length
 
-  console.log(`✅ Total items in ${filePath}: ${count}`)
+  console.log(` Total images uploaded to webiny: ✅ ${count}`)
 } catch (err) {
   console.error('❌ Error reading or parsing file:', err)
 }
