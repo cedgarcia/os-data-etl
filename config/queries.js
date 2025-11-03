@@ -70,7 +70,7 @@ const queries = {
       WHERE cv.verticalid = 7
       AND c.type = 4
       AND c.status = 'Published'
-      ORDER BY c.id
+      ORDER BY c.post
       OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
     `,
     custom: `
@@ -105,7 +105,7 @@ const queries = {
       WHERE cv.verticalid = 7
       AND c.type = 5
       AND c.status = 'Published'
-      ORDER BY c.id
+      ORDER BY c.post
       OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
     `,
     custom: `
