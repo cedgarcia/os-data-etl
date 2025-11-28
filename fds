@@ -1,0 +1,106 @@
+import * as cheerio from 'cheerio'
+import { nanoid } from 'nanoid'
+import { decode } from 'html-entities'
+
+export default (html) => {
+  const decodedHtml = decode(html)
+
+  const $ = cheerio.load(decodedHtml, { decodeEntities: false })
+
+  $('*').each((_, el) => {
+    const $el = $(el)
+    const tagName = el.tagName.toLowerCase()
+
+    if (tagName === 'iframe' || tagName === 'img' || tagName === 'video') {
+      return
+    }
+
+    if (tagName === 'div' && $el.find('iframe').length > 0) {
+      return
+    }
+
+    $el.removeAttr('style')
+  })
+
+  const contentBlocks = []
+  $('body')
+    .children()
+    .each((_, el) => {
+      const $el = $(el)
+      const tagName = el.tagName.toLowerCase()
+      let key = ''
+      let data = ''
+
+      switch (tagName) {
+        case 'h1':
+        case 'h2':
+        case 'h3':
+        case 'h4':
+        case 'h5':
+        case 'h6':
+          key = 'heading'
+          data = $el.html()
+          break
+        case 'p':
+          key = 'paragraph'
+          data = $el.html()
+          break
+        case 'div':
+          if ($el.find('iframe').length > 0) {
+            key = 'embed_html'
+            data = $.html(el)
+          } else {
+            key = 'paragraph'
+            data = $el.html()
+          }
+          break
+        case 'blockquote':
+        case 'script':
+          key = 'embed_html'
+          data = $.html(el)
+          break
+        case 'iframe':
+        case 'img':
+        case 'video':
+          key = 'embed_html'
+          data = $.html(el)
+          break
+        default:
+          return
+      }
+
+      if (data) {
+        let finalData = data.trim()
+        if (key === 'paragraph' || key === 'heading') {
+          finalData = decode(finalData)
+        }
+        if (finalData) {
+          contentBlocks.push({
+            id: nanoid(),
+            key,
+            data: finalData,
+          })
+        }
+      }
+    })
+
+  let body = ''
+  if (contentBlocks.length) {
+    const tagMapping = {
+      paragraph: 'p',
+      heading: 'h1',
+      embed_html: 'div',
+    }
+    body = contentBlocks
+      .map((block) => {
+        const tag = tagMapping[block.key]
+        return `<${tag}>${block.data}</${tag}>`
+      })
+      .join('')
+  }
+
+  return {
+    body,
+    contentBlocks,
+  }
+}

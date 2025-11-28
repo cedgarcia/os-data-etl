@@ -8,7 +8,7 @@ const main = async () => {
     clearMappingsCache()
     await refreshMappings()
 
-    await migrateData('videos', 'all', { batchSize: 9, maxBatches: 10 })
+    await migrateData('videos', 'all', { batchSize: 2, maxBatches: 1 })
   } catch (error) {
     console.error('VIDEO migration failed:', error)
     process.exit(1)

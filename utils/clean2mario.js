@@ -14,28 +14,7 @@ export default (html) => {
   // 3. Load with Cheerio
   const $ = cheerio.load(wrappedHtml, { decodeEntities: false })
 
-  // 4. Remove p, div, span that only contain br tags or &nbsp;
-  $('p, div, span').each((_, el) => {
-    const $el = $(el)
-    const html = $el.html()
-    const text = $el.text()
-
-    // Check if element only contains br tags (with possible whitespace)
-    const onlyBrTags = html && /^(\s|<br\s*\/?>)*$/i.test(html)
-
-    // Check if element only contains &nbsp; (encoded or literal) and whitespace
-    const onlyNbsp = text && /^[\s\u00A0]*$/.test(text) && text.length > 0
-
-    // Check if HTML only contains &nbsp; entities and whitespace
-    const onlyNbspEntities = html && /^(\s|&nbsp;)*$/i.test(html)
-
-    if (onlyBrTags || onlyNbsp || onlyNbspEntities) {
-      $el.remove()
-      return
-    }
-  })
-
-  // 5. Remove style attributes EXCEPT from embeds, iframe containers, and their children
+  // 4. Remove style attributes EXCEPT from embeds, iframe containers, and their children
   $('div, span, p').each((_, el) => {
     const $el = $(el)
     const isInsideEmbed =
@@ -53,7 +32,7 @@ export default (html) => {
 
   const contentBlocks = []
 
-  // 6. Get all top-level nodes (including text nodes)
+  // 5. Get all top-level nodes (including text nodes)
   $('body')
     .contents() // Use .contents() instead of .children() to get text nodes too
     .each((_, el) => {
@@ -82,7 +61,7 @@ export default (html) => {
 
       // Check if this is a script tag
       if ($element.is('script')) {
-        key = 'embed_html'
+        key = 'embed_script'
         data = $element.prop('outerHTML')
         contentBlocks.push({
           id: nanoid(),
@@ -115,7 +94,7 @@ export default (html) => {
       const hasIframe = $element.find('iframe').length > 0
 
       if (isSocialEmbed) {
-        key = 'embed_html'
+        key = 'embed_social'
         data = $element.prop('outerHTML')
       } else if (hasIframe) {
         key = 'embed_html'
@@ -189,12 +168,18 @@ export default (html) => {
       paragraph: 'p',
       heading: 'h1',
       embed_html: 'div',
+      embed_social: 'div',
+      embed_script: 'script',
     }
 
     body = contentBlocks
       .map((block) => {
         const tag = tagMapping[block.key]
-        if (block.key === 'embed_html') {
+        if (
+          block.key === 'embed_social' ||
+          block.key === 'embed_html' ||
+          block.key === 'embed_script'
+        ) {
           return block.data
         }
         return `<${tag}>${block.data}</${tag}>`

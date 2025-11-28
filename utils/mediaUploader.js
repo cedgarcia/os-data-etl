@@ -19,6 +19,7 @@ const query = `
 // const folderPath = 'assets/images'
 const baseImageUrl = './assets/complete-images' // this contains already downloaded images "20291 items"
 const IMAGE_MAPPING_FILE = './logs/dev-image-uploaded.json' // Store the mapping
+// const IMAGE_MAPPING_FILE = './logs/test-image-uploaded.json' // Store the mapping
 
 // Load existing mapping or create new one
 function loadImageMapping() {
@@ -129,6 +130,11 @@ export async function uploadToWebiny(
         aliases: [`files/video/${decodedFileName}`],
         caption: caption,
         addedById,
+        focusArea: {
+          size: { height: 0, width: 0 },
+          position: { vertical: 'top', horizontal: 'center' },
+          zoom: 50,
+        },
         info: {
           name: decodedFileName,
           type: contentType || 'image/jpeg',
@@ -147,6 +153,11 @@ export async function uploadToWebiny(
         aliases: [`files/photo/${decodedFileName}`],
         caption: caption,
         addedById,
+        focusArea: {
+          size: { height: 0, width: 0 },
+          position: { vertical: 'top', horizontal: 'center' },
+          zoom: 50,
+        },
         info: {
           name: decodedFileName,
           type: contentType || 'image/jpeg',

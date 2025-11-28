@@ -92,6 +92,7 @@ export async function mapVideo(oldVideo) {
     status: 'publish',
     slug: oldVideo.slug || '',
     addedById,
+    authorId: addedById,
     categoryId: categoryMap[oldVideo.category] || null,
     leagueId: leagueMap[oldVideo.subverticalid] || null,
     websiteId: websiteMap[oldVideo.verticalid] || null,

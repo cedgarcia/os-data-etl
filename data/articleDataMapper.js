@@ -5,25 +5,19 @@ import {
   statusMap,
   usersMap,
 } from './mappings.js'
-import { cleanArticleBody } from '../utils/cleanArticleBody.js'
-// import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
+
 import {
   uploadToWebiny,
   getMediaFileIdByFilename,
 } from '../utils/mediaUploader.js'
 
+// ✅ Import your cleanArticleBody function
+import cleanArticleBodyDecoded from '../utils/cleanArticleBodyDecoded.js'
+
 export async function mapArticle(oldArticle) {
-  // LOCAL ENVIRONMENT
-  // const defaultUserId = '68ecba72ffef4e0002407de1#0005' // Fallback ID for "One Sports" user
+  // ... (all your existing code for user mapping and image upload)
 
-  //DEV ENVIRONMENT
-  // const defaultUserId = '68dba1c6f258460002afd595#0006' // Fallback ID for "One Sports" user
-
-  //TEST ENVIRONMENT
-  // const defaultUserId = '689579a9720a4d0002a21f3a#0012' // Fallback ID for "One Sports" user
-
-  // Map the author field from the article to the corresponding migrated user
-  let addedById = usersMap['One'] // Start with default
+  let addedById = usersMap['One']
 
   if (!usersMap['One']) {
     console.warn(
@@ -31,38 +25,6 @@ export async function mapArticle(oldArticle) {
     )
     return null
   }
-
-  // if (oldArticle.author && typeof oldArticle.author === 'string') {
-  //   const authorName = oldArticle.author.trim()
-
-  //   // Look up the author in usersMap
-  //   if (usersMap[authorName]) {
-  //     addedById = usersMap[authorName]
-  //     // console.log(
-  //     //   `✅ Mapped author "${authorName}" to user ID: ${addedById} for article ${oldArticle.id}`
-  //     // )
-  //   } else if (authorName === '') {
-  //     // Handle empty string authors
-  //     if (usersMap['']) {
-  //       addedById = usersMap['']
-  //       // console.log(
-  //       //   `✅ Mapped empty author to user ID: ${addedById} for article ${oldArticle.id}`
-  //       // )
-  //     } else {
-  //       // console.warn(
-  //       //   `⚠️ Empty author not found in usersMap for article ${oldArticle.id}, using default user`
-  //       // )
-  //     }
-  //   } else {
-  //     // console.warn(
-  //     //   `⚠️ Author "${authorName}" not found in usersMap for article ${oldArticle.id}, using default user`
-  //     // )
-  //   }
-  // } else {
-  //   // console.warn(
-  //   //   `⚠️ No author field for article ${oldArticle.id}, using default user`
-  //   // )
-  // }
 
   let mediaFileId = oldArticle.existingMediaFileId
 
@@ -91,11 +53,6 @@ export async function mapArticle(oldArticle) {
 
       try {
         console.log(`📤 Uploading image: ${decodedFileName}`)
-
-        // ======================================
-        //  CRITICAL CHANGE: Use image field for image upload / not thumbnail
-        //  For articles, no videoUrl is passed (null by default)
-        // ======================================
         const res = await uploadToWebiny(oldArticle.image, caption)
         mediaFileId = res.mediaFileId
         console.log(
@@ -111,7 +68,6 @@ export async function mapArticle(oldArticle) {
     }
   }
 
-  // ⚠️ CRITICAL CHECK: Skip processing if no mediaFileId
   if (!mediaFileId) {
     console.log(
       `⚠️ Skipping article ${oldArticle.id} (${
@@ -127,26 +83,26 @@ export async function mapArticle(oldArticle) {
     })`
   )
 
+  // ✅ Process the body using cleanArticleBody
+  const cleanedContent = cleanArticleBodyDecoded(oldArticle.body || '')
+
   const mappedArticle = {
     legacyId: oldArticle.id ? String(oldArticle.id) : null,
     title: oldArticle.title || '',
     lede: oldArticle.description || '',
-    story: cleanArticleBody(oldArticle.body),
+    body: cleanedContent.body,
+    contentBlock: JSON.stringify(cleanedContent.contentBlocks),
     type: 'story',
     status: 'publish',
     slug: oldArticle.slug || '',
     mediaFileId: mediaFileId,
     addedById: addedById,
+    authorId: addedById,
     categoryId: categoryMap[oldArticle.category],
     leagueId: leagueMap[oldArticle.subverticalid],
     websiteId: websiteMap[oldArticle.verticalid],
-    contentBlock: oldArticle.contentBlock || null,
-    body: ' ',
     settings: null,
     publishedAt: oldArticle.post || null,
-    author: {
-      name: oldArticle.author || '',
-    },
   }
 
   return mappedArticle

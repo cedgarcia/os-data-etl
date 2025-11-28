@@ -1,7 +1,7 @@
-const cheerio = require('cheerio')
-const { nanoid } = require('nanoid')
+import * as cheerio from 'cheerio'
+import { nanoid } from 'nanoid'
 
-module.exports = (html) => {
+export default (html) => {
   const $ = cheerio.load(html)
   const contentBlocks = []
 
@@ -28,17 +28,16 @@ module.exports = (html) => {
         case 'p':
         case 'div':
         case 'span':
-        case 'img':
         case 'video':
           key = 'paragraph'
           data = $(element).html().trim()
           break
 
         case 'iframe':
+        case 'img':
           key = 'embed_html'
           data = $.html(element).trim()
           break
-
         default:
           return
       }

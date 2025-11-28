@@ -1,8 +1,19 @@
-// cleanHtmlToBlocks.js
 import * as cheerio from 'cheerio'
 import { nanoid } from 'nanoid'
 
-export default (html) => {
+/**
+ * Processes HTML content and returns structured content blocks
+ * @param {string} html - Raw HTML content
+ * @returns {Object} - { body: string, contentBlocks: array }
+ */
+export const processArticleBody = (html) => {
+  if (!html || typeof html !== 'string' || html.trim() === '') {
+    return {
+      body: '',
+      contentBlocks: [],
+    }
+  }
+
   const $ = cheerio.load(html)
   const contentBlocks = []
 
@@ -12,6 +23,7 @@ export default (html) => {
       let key = ''
       let data = ''
       let element = el
+
       const children = $(element).children()
       if (children.length) {
         element = children[0]
@@ -24,18 +36,21 @@ export default (html) => {
           key = 'heading'
           data = $(element).html().trim()
           break
+
         case 'p':
         case 'div':
         case 'span':
           key = 'paragraph'
           data = $(element).html().trim()
           break
+
         case 'iframe':
         case 'img':
         case 'video':
           key = 'embed_html'
           data = $.html(element).trim()
           break
+
         default:
           return
       }

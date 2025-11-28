@@ -63,6 +63,56 @@ const queries = {
       ORDER BY c.id
       OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
     `,
+    // 8269, 8751, 11705,30339, 10830, 12840
+
+    // 8615 - maraming twitter
+    // 8565 - maraming images
+    //13837 - mga br
+
+    // MGA MAY SIRA
+    //     8388
+    // 8404
+    // 8407
+    // 8966
+    // 15490
+    // 17174
+    // 17250
+    // 17251
+    // 17253
+    // 17282
+    // 17286
+    // 17355
+    // 17357
+    // 17378
+    // 17465
+    // 17545
+    // 17546
+    // 17547
+    // 17573
+    // 17713
+    // 17715
+    // 17718
+    // 17793
+    // 17821
+    // 17887
+    // 17911
+    // 18035
+    // 18039
+    // 18084
+    // 19667
+    // 20037
+    // 22691
+    // 31143
+    // 36040
+    // 37775
+    // 37888
+    // all: `
+    //      SELECT c.*, cv.subverticalid, cv.verticalid
+    // FROM contents c
+    // INNER JOIN contents_vertical cv ON c.id = cv.contentid
+    // WHERE c.id = 37888  ;
+
+    //  `,
     all: `
       SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c

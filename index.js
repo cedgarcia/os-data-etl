@@ -34,7 +34,6 @@ import {
   mapLeague,
   mapVideo,
 } from './data/index.js'
-
 import { CONTENT_CONFIGS } from './utils/constants.js'
 import {
   logSuccessArticle,
@@ -48,6 +47,23 @@ import {
   logSuccessUser,
   logFailedUser,
 } from './utils/loggers.js'
+
+// ============================================
+// TIMING HELPER FUNCTION
+// ============================================
+const formatDuration = (ms) => {
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m ${seconds % 60}s`
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`
+  } else {
+    return `${seconds}s`
+  }
+}
 
 // ============================================
 // POST TO WEBINY API FUNCTIONS
@@ -466,6 +482,8 @@ const processBatch = async (
   batchNumber,
   totalBatches
 ) => {
+  const batchStartTime = Date.now()
+
   let successCount = 0
   let errorCount = 0
   let existingCount = 0
@@ -480,31 +498,31 @@ const processBatch = async (
   switch (contentType) {
     case 'leagues':
       checkExistingQuery = `
-        SELECT id FROM success_migration_leagues 
+        SELECT id FROM success_migration_leagues
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
     case 'categories':
       checkExistingQuery = `
-        SELECT id FROM success_migration_categories 
+        SELECT id FROM success_migration_categories
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
     case 'users':
       checkExistingQuery = `
-          SELECT author FROM success_migration_users 
-          WHERE author IN (${oldData.map(() => '?').join(', ')})
-        `
+        SELECT author FROM success_migration_users
+        WHERE author IN (${oldData.map(() => '?').join(', ')})
+      `
       break
     case 'sponsors':
       checkExistingQuery = `
-          SELECT id FROM success_migration_sponsors 
-          WHERE id IN (${oldData.map(() => '?').join(', ')})
-        `
+        SELECT id FROM success_migration_sponsors
+        WHERE id IN (${oldData.map(() => '?').join(', ')})
+      `
       break
     case 'articles':
       checkExistingQuery = `
-        SELECT id FROM success_migration_articles 
+        SELECT id FROM success_migration_articles
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
@@ -516,7 +534,7 @@ const processBatch = async (
       break
     default:
       checkExistingQuery = `
-        SELECT id FROM success_migration_${contentType} 
+        SELECT id FROM success_migration_${contentType}
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
@@ -616,27 +634,27 @@ const processBatch = async (
         return { success: false, error }
       }
 
-      // Check if legacyId already exists in Webiny for articles and videos
-      let isExisting = false
-      if (
-        (contentType === 'articles' || contentType === 'videos') &&
-        newItem.legacyId
-      ) {
-        const exists = await checkContentExists(newItem.legacyId)
-        if (exists) {
-          console.warn(
-            `${contentType === 'articles' ? 'Article' : 'Video'} ${
-              oldItem.id
-            } already exists in Webiny (legacyId: ${newItem.legacyId})`
-          )
-          isExisting = true
-          return {
-            success: false,
-            existing: true,
-            error: 'Already exists in Webiny',
-          }
-        }
-      }
+      // // Check if legacyId already exists in Webiny for articles and videos
+      // let isExisting = false
+      // if (
+      //   (contentType === 'articles' || contentType === 'videos') &&
+      //   newItem.legacyId
+      // ) {
+      //   const exists = await checkContentExists(newItem.legacyId)
+      //   if (exists) {
+      //     console.warn(
+      //       `${contentType === 'articles' ? 'Article' : 'Video'} ${
+      //         oldItem.id
+      //       } already exists in Webiny (legacyId: ${newItem.legacyId})`
+      //     )
+      //     isExisting = true
+      //     return {
+      //       success: false,
+      //       existing: true,
+      //       error: 'Already exists in Webiny',
+      //     }
+      //   }
+      // }
 
       try {
         const postResult = await postData(contentType, oldItem, newItem)
@@ -690,7 +708,7 @@ const processBatch = async (
         }
       } catch (error) {
         let errorMessage = error.message
-        isExisting = error.type === 'duplicate'
+        let isExisting = error.type === 'duplicate'
         if (
           !isExisting &&
           error.response?.data?.message?.includes('already exists')
@@ -741,13 +759,16 @@ const processBatch = async (
   errorCount = results.filter((r) => !r.success && !r.existing).length
   existingCount = results.filter((r) => r.existing).length + skippedCount
 
-  console.log(`\nBatch ${batchNumber}/${totalBatches} Summary:`)
-  console.log(`  Success: ${successCount}`)
-  console.log(`  Existing: ${existingCount}`)
-  console.log(`  Errors: ${errorCount}`)
-  console.log(`  Total in batch: ${oldData.length}`)
+  const batchDuration = Date.now() - batchStartTime
 
-  return { successCount, errorCount, existingCount }
+  console.log(`\nBatch ${batchNumber}/${totalBatches} Summary:`)
+  console.log(` Success: ${successCount}`)
+  console.log(` Existing: ${existingCount}`)
+  console.log(` Errors: ${errorCount}`)
+  console.log(` Total in batch: ${oldData.length}`)
+  console.log(` Duration: ${formatDuration(batchDuration)}`)
+
+  return { successCount, errorCount, existingCount, duration: batchDuration }
 }
 
 // ============================================
@@ -758,6 +779,8 @@ export const migrateData = async (
   queryType = 'test',
   options = {}
 ) => {
+  const migrationStartTime = Date.now()
+
   try {
     await getMappings()
     const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
@@ -772,12 +795,10 @@ export const migrateData = async (
         return { successCount: 0, errorCount: 0, existingCount: 0, total: 0 }
       }
 
-      const { successCount, errorCount, existingCount } = await processBatch(
-        contentType,
-        oldData,
-        1,
-        1
-      )
+      const { successCount, errorCount, existingCount, duration } =
+        await processBatch(contentType, oldData, 1, 1)
+
+      const totalDuration = Date.now() - migrationStartTime
 
       console.log(`\n${'='.repeat(60)}`)
       console.log(`${contentType} migration completed!`)
@@ -786,8 +807,18 @@ export const migrateData = async (
       console.log(`Existing in Webiny: ${existingCount}`)
       console.log(`Errors: ${errorCount}`)
       console.log(`Total: ${oldData.length}`)
+      console.log(`Total Duration: ${formatDuration(totalDuration)}`)
+      // console.log(
+      //   `Average per item: ${formatDuration(totalDuration / oldData.length)}`
+      // )
 
-      return { successCount, errorCount, existingCount, total: oldData.length }
+      return {
+        successCount,
+        errorCount,
+        existingCount,
+        total: oldData.length,
+        duration: totalDuration,
+      }
     }
 
     console.log(`Fetching total count...`)
@@ -806,6 +837,7 @@ export const migrateData = async (
     let overallSuccessCount = 0
     let overallErrorCount = 0
     let overallExistingCount = 0
+    let totalBatchDuration = 0
     let currentOffset = startOffset
 
     for (let batchNum = 1; batchNum <= batchesToProcess; batchNum++) {
@@ -830,25 +862,32 @@ export const migrateData = async (
 
         console.log(`Fetched ${oldData.length} records`)
 
-        const { successCount, errorCount, existingCount } = await processBatch(
-          contentType,
-          oldData,
-          batchNum,
-          batchesToProcess
-        )
+        const { successCount, errorCount, existingCount, duration } =
+          await processBatch(contentType, oldData, batchNum, batchesToProcess)
 
         overallSuccessCount += successCount
         overallErrorCount += errorCount
         overallExistingCount += existingCount
+        totalBatchDuration += duration
+
+        const avgTimePerBatch = totalBatchDuration / batchNum
+        const estimatedTimeRemaining =
+          avgTimePerBatch * (batchesToProcess - batchNum)
 
         console.log(`\nOverall Progress:`)
-        console.log(`  Total Success: ${overallSuccessCount}`)
-        console.log(`  Total Existing: ${overallExistingCount}`)
-        console.log(`  Total Errors: ${overallErrorCount}`)
+        console.log(` Total Success: ${overallSuccessCount}`)
+        console.log(` Total Existing: ${overallExistingCount}`)
+        console.log(` Total Errors: ${overallErrorCount}`)
         console.log(
-          `  Total Processed: ${
+          ` Total Processed: ${
             overallSuccessCount + overallErrorCount + overallExistingCount
           }/${totalRecords}`
+        )
+        console.log(
+          ` Elapsed Time: ${formatDuration(Date.now() - migrationStartTime)}`
+        )
+        console.log(
+          ` Estimated Time Remaining: ${formatDuration(estimatedTimeRemaining)}`
         )
       } catch (error) {
         console.error(`Batch ${batchNum} failed:`, error.message)
@@ -858,32 +897,32 @@ export const migrateData = async (
       currentOffset += batchSize
     }
 
+    const totalDuration = Date.now() - migrationStartTime
+    const totalProcessed =
+      overallSuccessCount + overallErrorCount + overallExistingCount
+    const avgPerItem = totalProcessed > 0 ? totalDuration / totalProcessed : 0
+
     console.log(`\n${'='.repeat(60)}`)
     console.log('MIGRATION COMPLETED!')
     console.log('='.repeat(60))
     console.log(`TOTAL SUCCESSFUL MIGRATIONS: ${overallSuccessCount}`)
     console.log(`TOTAL EXISTING IN WEBINY: ${overallExistingCount}`)
     console.log(`TOTAL FAILED MIGRATIONS: ${overallErrorCount}`)
-    console.log(
-      `TOTAL PROCESSED: ${
-        overallSuccessCount + overallErrorCount + overallExistingCount
-      }`
-    )
+    console.log(`TOTAL PROCESSED: ${totalProcessed}`)
     console.log(`TOTAL AVAILABLE MIGRATIONS: ${totalRecords}`)
-    console.log(
-      `ITEMS NEEDING PROCESSING: ${
-        totalRecords -
-        (overallSuccessCount + overallErrorCount + overallExistingCount)
-      }`
-    )
+    console.log(`ITEMS NEEDING PROCESSING: ${totalRecords - totalProcessed}`)
+    console.log(`TOTAL DURATION: ${formatDuration(totalDuration)}`)
+    // console.log(`AVERAGE TIME PER ITEM: ${formatDuration(avgPerItem)}`)
     console.log('='.repeat(60))
 
     return {
       successCount: overallSuccessCount,
       errorCount: overallErrorCount,
       existingCount: overallExistingCount,
-      total: overallSuccessCount + overallErrorCount + overallExistingCount,
+      total: totalProcessed,
       totalAvailable: totalRecords,
+      duration: totalDuration,
+      avgPerItem,
     }
   } catch (error) {
     console.error(`Migration failed for ${contentType}:`, error)
@@ -892,6 +931,7 @@ export const migrateData = async (
 }
 
 export const migrateBatch = async (migrations = []) => {
+  const totalStartTime = Date.now()
   const results = {}
 
   for (const migration of migrations) {
@@ -906,13 +946,17 @@ export const migrateBatch = async (migrations = []) => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
+  const totalDuration = Date.now() - totalStartTime
+  console.log(`\n${'='.repeat(60)}`)
+  console.log(`TOTAL MIGRATION TIME: ${formatDuration(totalDuration)}`)
+  console.log('='.repeat(60))
+
   return results
 }
 
 // ============================================
 // MAIN EXECUTION
 // ============================================
-
 const main = async () => {
   try {
     console.log('Starting migration process...')
