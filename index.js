@@ -47,6 +47,12 @@ import {
   logSuccessUser,
   logFailedUser,
 } from './utils/loggers.js'
+import {
+  initializeLogFile,
+  writeLogSummary,
+  logSuccessToFile,
+  logFailureToFile,
+} from './utils/fileLogger.js'
 
 // ============================================
 // TIMING HELPER FUNCTION
@@ -488,6 +494,9 @@ const processBatch = async (
   let errorCount = 0
   let existingCount = 0
 
+  const failedItems = []
+  const successfulItems = []
+
   // Limit concurrency for API posts and database queries
   const limit = pLimit(10)
 
@@ -522,7 +531,7 @@ const processBatch = async (
       break
     case 'articles':
       checkExistingQuery = `
-        SELECT id FROM success_migration_articles
+        SELECT id FROM success_migrated_articles_migration_env 
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
@@ -664,21 +673,85 @@ const processBatch = async (
             switch (contentType) {
               case 'articles':
                 await logSuccessArticle(oldItem, postResult.data)
+                // Add file logging
+                logSuccessToFile(
+                  'articles',
+                  oldItem,
+                  postResult.data?.story?.id || null
+                )
+                successfulItems.push({
+                  id: oldItem.id,
+                  title: oldItem.title,
+                  webinyId: postResult.data?.story?.id || null,
+                })
                 break
               case 'sponsors':
                 await logSuccessSponsor(oldItem, postResult.data)
+                logSuccessToFile(
+                  'sponsors',
+                  oldItem,
+                  postResult.data?.id || null
+                )
+                successfulItems.push({
+                  id: oldItem.id,
+                  title: oldItem.name,
+                  webinyId: postResult.data?.id || null,
+                })
                 break
               case 'leagues':
                 await logSuccessLeague(oldItem, postResult.data)
+                logSuccessToFile(
+                  'leagues',
+                  oldItem,
+                  postResult.data?.id || null
+                )
+                successfulItems.push({
+                  id: oldItem.id,
+                  title: oldItem.name,
+                  webinyId: postResult.data?.id || null,
+                })
                 break
               case 'categories':
                 await logSuccessCategory(oldItem, postResult.data)
+                logSuccessToFile(
+                  'categories',
+                  oldItem,
+                  postResult.data?.id || null
+                )
+                successfulItems.push({
+                  id: oldItem.id,
+                  title: oldItem.name,
+                  webinyId: postResult.data?.id || null,
+                })
                 break
               case 'users':
                 await logSuccessUser(oldItem, postResult.data, index)
+                logSuccessToFile(
+                  'users',
+                  {
+                    id: oldItem.distinct_author_count,
+                    title: oldItem.distinct_author_count,
+                  },
+                  postResult.data?.id || null
+                )
+                successfulItems.push({
+                  id: oldItem.distinct_author_count,
+                  title: oldItem.distinct_author_count,
+                  webinyId: postResult.data?.id || null,
+                })
                 break
               case 'videos':
                 await logSuccessVideo(oldItem, postResult.data)
+                logSuccessToFile(
+                  'videos',
+                  oldItem,
+                  postResult.data?.story?.id || null
+                )
+                successfulItems.push({
+                  id: oldItem.id,
+                  title: oldItem.title,
+                  webinyId: postResult.data?.story?.id || null,
+                })
                 break
               default:
                 console.warn(
@@ -720,18 +793,36 @@ const processBatch = async (
           `Failed to migrate ${contentType} item ${index + 1}:`,
           errorMessage
         )
+
+        // Track failed items
+        failedItems.push({
+          id:
+            contentType === 'users'
+              ? oldItem.distinct_author_count
+              : oldItem.id,
+          title:
+            contentType === 'users'
+              ? oldItem.distinct_author_count
+              : oldItem.title || oldItem.name,
+          error: errorMessage,
+        })
+
         switch (contentType) {
           case 'articles':
             await logFailure(oldItem, `Posting error: ${errorMessage}`)
+            logFailureToFile('articles', oldItem, errorMessage)
             break
           case 'sponsors':
             await logFailedSponsor(oldItem, `Posting error: ${errorMessage}`)
+            logFailureToFile('sponsors', oldItem, errorMessage)
             break
           case 'leagues':
             await logFailedLeague(oldItem, `Posting error: ${errorMessage}`)
+            logFailureToFile('leagues', oldItem, errorMessage)
             break
           case 'categories':
             await logFailedCategory(oldItem, `Posting error: ${errorMessage}`)
+            logFailureToFile('categories', oldItem, errorMessage)
             break
           case 'users':
             await logFailedUser(
@@ -739,9 +830,19 @@ const processBatch = async (
               `Posting error: ${errorMessage}`,
               index
             )
+            logFailureToFile(
+              'users',
+              {
+                id: oldItem.distinct_author_count,
+                title: oldItem.distinct_author_count,
+                slug: null,
+              },
+              errorMessage
+            )
             break
           case 'videos':
             await logFailedVideo(oldItem, `Posting error: ${errorMessage}`)
+            logFailureToFile('videos', oldItem, errorMessage)
             break
           default:
             console.warn(
@@ -749,7 +850,13 @@ const processBatch = async (
             )
             break
         }
-        return { success: false, existing: isExisting, error: errorMessage }
+        return {
+          success: false,
+          existing: isExisting,
+          error: errorMessage,
+          failedItems,
+          successfulItems,
+        }
       }
     })
   )
@@ -774,6 +881,8 @@ const processBatch = async (
 // ============================================
 // MAIN MIGRATION FUNCTION
 // ============================================
+// Update the migrateData function
+
 export const migrateData = async (
   contentType,
   queryType = 'test',
@@ -781,10 +890,22 @@ export const migrateData = async (
 ) => {
   const migrationStartTime = Date.now()
 
+  // Initialize log files
+  initializeLogFile(
+    `success-${contentType}-migration-logs-migration-env.txt`,
+    contentType,
+    'success'
+  )
+  initializeLogFile(
+    `failed-${contentType}-migration-logs-migration-env.txt`,
+    contentType,
+    'failed'
+  )
+
   try {
     await getMappings()
     const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
-    const limit = pLimit(1) // Process batches sequentially for better logging
+    const limit = pLimit(1)
 
     console.log(`\nStarting migration for ${contentType} (${queryType})`)
 
@@ -794,8 +915,7 @@ export const migrateData = async (
         console.log('No data found, skipping...')
         return { successCount: 0, errorCount: 0, existingCount: 0, total: 0 }
       }
-
-      const { successCount, errorCount, existingCount, duration } =
+      const { successCount, errorCount, existingCount, duration, failedItems } =
         await processBatch(contentType, oldData, 1, 1)
 
       const totalDuration = Date.now() - migrationStartTime
@@ -806,11 +926,41 @@ export const migrateData = async (
       console.log(`Success: ${successCount}`)
       console.log(`Existing in Webiny: ${existingCount}`)
       console.log(`Errors: ${errorCount}`)
+
+      // Log failed legacy IDs
+      if (failedItems && failedItems.length > 0) {
+        console.log(`\nFailed Legacy IDs:`)
+        failedItems.forEach((item) => {
+          console.log(
+            `  - ID: ${item.id} (${item.title || 'N/A'}) - ${item.error}`
+          )
+        })
+      }
+
       console.log(`Total: ${oldData.length}`)
       console.log(`Total Duration: ${formatDuration(totalDuration)}`)
-      // console.log(
-      //   `Average per item: ${formatDuration(totalDuration / oldData.length)}`
-      // )
+
+      // Write summary to log files
+      writeLogSummary(
+        `success-${contentType}-migration-logs-migration-env.txt`,
+        {
+          successCount,
+          errorCount,
+          existingCount,
+          total: oldData.length,
+          duration: formatDuration(totalDuration),
+        }
+      )
+      writeLogSummary(
+        `failed-${contentType}-migration-logs-migration-env.txt`,
+        {
+          successCount,
+          errorCount,
+          existingCount,
+          total: oldData.length,
+          duration: formatDuration(totalDuration),
+        }
+      )
 
       return {
         successCount,
@@ -839,6 +989,7 @@ export const migrateData = async (
     let overallExistingCount = 0
     let totalBatchDuration = 0
     let currentOffset = startOffset
+    let allFailedItems = [] // Track all failed items
 
     for (let batchNum = 1; batchNum <= batchesToProcess; batchNum++) {
       console.log(`\n${'='.repeat(60)}`)
@@ -862,13 +1013,23 @@ export const migrateData = async (
 
         console.log(`Fetched ${oldData.length} records`)
 
-        const { successCount, errorCount, existingCount, duration } =
-          await processBatch(contentType, oldData, batchNum, batchesToProcess)
+        const {
+          successCount,
+          errorCount,
+          existingCount,
+          duration,
+          failedItems,
+        } = await processBatch(contentType, oldData, batchNum, batchesToProcess)
 
         overallSuccessCount += successCount
         overallErrorCount += errorCount
         overallExistingCount += existingCount
         totalBatchDuration += duration
+
+        // Collect failed items
+        if (failedItems && failedItems.length > 0) {
+          allFailedItems = allFailedItems.concat(failedItems)
+        }
 
         const avgTimePerBatch = totalBatchDuration / batchNum
         const estimatedTimeRemaining =
@@ -900,7 +1061,6 @@ export const migrateData = async (
     const totalDuration = Date.now() - migrationStartTime
     const totalProcessed =
       overallSuccessCount + overallErrorCount + overallExistingCount
-    const avgPerItem = totalProcessed > 0 ? totalDuration / totalProcessed : 0
 
     console.log(`\n${'='.repeat(60)}`)
     console.log('MIGRATION COMPLETED!')
@@ -908,12 +1068,40 @@ export const migrateData = async (
     console.log(`TOTAL SUCCESSFUL MIGRATIONS: ${overallSuccessCount}`)
     console.log(`TOTAL EXISTING IN WEBINY: ${overallExistingCount}`)
     console.log(`TOTAL FAILED MIGRATIONS: ${overallErrorCount}`)
+
+    // Log failed legacy IDs in summary
+    if (allFailedItems.length > 0) {
+      console.log(`\nFAILED LEGACY IDs (${allFailedItems.length} total):`)
+      allFailedItems.forEach((item) => {
+        console.log(
+          `  - ID: ${item.id} | Title: ${item.title || 'N/A'} | Error: ${
+            item.error
+          }`
+        )
+      })
+    }
+
     console.log(`TOTAL PROCESSED: ${totalProcessed}`)
     console.log(`TOTAL AVAILABLE MIGRATIONS: ${totalRecords}`)
     console.log(`ITEMS NEEDING PROCESSING: ${totalRecords - totalProcessed}`)
     console.log(`TOTAL DURATION: ${formatDuration(totalDuration)}`)
-    // console.log(`AVERAGE TIME PER ITEM: ${formatDuration(avgPerItem)}`)
     console.log('='.repeat(60))
+
+    // Write summary to log files
+    writeLogSummary(`success-${contentType}-migration-logs-migration-env.txt`, {
+      successCount: overallSuccessCount,
+      errorCount: overallErrorCount,
+      existingCount: overallExistingCount,
+      total: totalProcessed,
+      duration: formatDuration(totalDuration),
+    })
+    writeLogSummary(`failed-${contentType}-migration-logs-migration-env.txt`, {
+      successCount: overallSuccessCount,
+      errorCount: overallErrorCount,
+      existingCount: overallExistingCount,
+      total: totalProcessed,
+      duration: formatDuration(totalDuration),
+    })
 
     return {
       successCount: overallSuccessCount,
@@ -922,7 +1110,7 @@ export const migrateData = async (
       total: totalProcessed,
       totalAvailable: totalRecords,
       duration: totalDuration,
-      avgPerItem,
+      failedItems: allFailedItems, // Return failed items
     }
   } catch (error) {
     console.error(`Migration failed for ${contentType}:`, error)

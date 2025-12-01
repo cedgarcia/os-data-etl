@@ -16,7 +16,7 @@ export const logSuccessArticle = async (oldItem, webinyData) => {
   }
 
   const query = `
-    INSERT INTO success_migration_articles 
+    INSERT INTO success_migrated_articles_migration_env 
     (id, title, description, intro, slug, webinyid)
     VALUES (?, ?, ?, ?, ?, ?)
   `
@@ -38,7 +38,7 @@ export const logSuccessArticle = async (oldItem, webinyData) => {
           err.message.includes('duplicate')
         ) {
           console.warn(
-            `DUPLICATE RECORD: Article ${oldItem.id} already exists in success_migration_articles`
+            `DUPLICATE RECORD: Article ${oldItem.id} already exists in success_migrated_articles_migration_env `
           )
           reject({ type: 'duplicate', message: err.message })
         } else {
@@ -121,7 +121,7 @@ export const logFailure = async (oldItem, errorMsg) => {
   ]
 
   const placeholders = columns.map(() => '?').join(', ')
-  const query = `INSERT INTO failed_migration_articles (${columns.join(
+  const query = `INSERT INTO failed_migrated_articles_migration_env (${columns.join(
     ', '
   )}) VALUES (${placeholders})`
 
@@ -132,13 +132,13 @@ export const logFailure = async (oldItem, errorMsg) => {
     sql.query(connectionString, query, params, (err, results) => {
       if (err) {
         console.error(
-          `Failed to log article ${oldItem.id} to failed_migration_articles:`,
+          `Failed to log article ${oldItem.id} to failed_migrated_articles_migration_env:`,
           err.message
         )
         reject(err)
       } else {
         console.log(
-          `Logged failed article ${oldItem.id} to failed_migration_articles: ${errorMsg}`
+          `Logged failed article ${oldItem.id} to failed_migrated_articles_migration_env: ${errorMsg}`
         )
         resolve(results)
       }
