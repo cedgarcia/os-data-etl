@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const folderPath = 'assets/complete-images'
+const folderPath = 'assets/complete-images-nov1'
 
 async function countFilesInFolder(folderPath) {
   return new Promise((resolve, reject) => {
@@ -23,8 +23,10 @@ async function countFilesInFolder(folderPath) {
 
 countFilesInFolder(folderPath)
   .then((count) =>
+    // Should be 20291 as of September
+    // Should be 21936 as of November
     console.log(
-      `COUNT OF IMAGES DOWNLOADED (in the "assets/complete-images" folder): ✅ ${count}`
+      `COUNT OF IMAGES DOWNLOADED (in the "assets/complete-images-nov" folder): ✅ ${count}`
     )
   )
   .catch((err) => console.error('Error:', err))

@@ -14,7 +14,7 @@ const query = `SELECT DISTINCT c.image
   ORDER BY c.image
   OFFSET [offsetValue] ROWS FETCH NEXT 100 ROWS ONLY;`
 
-const folderPath = 'assets/complete-images'
+const folderPath = 'assets/complete-images-nov1'
 const baseImageUrl = 'https://1cms-img.imgix.net'
 const errorLogPath = 'logs/image_error_log.txt'
 const downloadLogPath = 'logs/image_download_log.txt'
@@ -107,7 +107,7 @@ export async function downloadImage(fileName, retries = 3) {
   }
 }
 
-async function getImages(targetBatch = null, startBatch = 0, endBatch = 203) {
+async function getImages(targetBatch = null, startBatch = 0, endBatch = 230) {
   try {
     const connectionString = config.database.connectionString
 
