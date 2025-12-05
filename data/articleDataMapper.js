@@ -15,8 +15,6 @@ import {
 import cleanArticleBodyDecoded from '../utils/cleanArticleBodyDecoded.js'
 
 export async function mapArticle(oldArticle) {
-  // ... (all your existing code for user mapping and image upload)
-
   let addedById = usersMap['One']
 
   let defaultCategoryId = categoryMap[2]
