@@ -1,6 +1,6 @@
 import { websiteMap, leagueMap, categoryMap, usersMap } from './mappings.js'
-import { cleanArticleBody } from '../utils/cleanArticleBody.js'
-// import { uploadToWebiny, getMediaFileIdByFilename } from '../imageDownloader.js'
+// ✅ Import cleanArticleBodyDecoded instead of cleanArticleBody
+import cleanArticleBodyDecoded from '../utils/cleanArticleBodyDecoded.js'
 import {
   uploadToWebiny,
   getMediaFileIdByFilename,
@@ -83,11 +83,15 @@ export async function mapVideo(oldVideo) {
     })`
   )
 
+  // ✅ Process the body using cleanArticleBodyDecoded (same as articles)
+  const cleanedContent = cleanArticleBodyDecoded(oldVideo.body || '')
+
   const mappedVideo = {
     legacyId: oldVideo.id ? String(oldVideo.id) : null,
     title: oldVideo.title || '',
     lede: oldVideo.description || '',
-    story: cleanArticleBody(oldVideo.body || ''),
+    body: cleanedContent.body, // ✅ Use processed body
+    contentBlock: JSON.stringify(cleanedContent.contentBlocks), // ✅ Add contentBlock
     type: 'video',
     status: 'publish',
     slug: oldVideo.slug || '',
@@ -100,8 +104,6 @@ export async function mapVideo(oldVideo) {
     // For videos: mediaFileId and mainVideoId are the same (the photo/thumbnail)
     mediaFileId: mediaFileId,
     mainVideoId: mediaFileId, // Same as mediaFileId for videos
-    contentBlock: oldVideo.contentBlock || null,
-    body: ' ',
     settings: null,
     author: {
       name: oldVideo.author || '',

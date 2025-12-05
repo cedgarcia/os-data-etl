@@ -19,6 +19,8 @@ export async function mapArticle(oldArticle) {
 
   let addedById = usersMap['One']
 
+  let defaultCategoryId = categoryMap[2]
+
   if (!usersMap['One']) {
     console.warn(
       `⚠️ No usersMap entry for "One", skipping mapping for article ${oldArticle.id}`
@@ -98,7 +100,7 @@ export async function mapArticle(oldArticle) {
     mediaFileId: mediaFileId,
     addedById: addedById,
     authorId: addedById,
-    categoryId: categoryMap[oldArticle.category],
+    categoryId: categoryMap[oldArticle.category] || defaultCategoryId,
     leagueId: leagueMap[oldArticle.subverticalid],
     websiteId: websiteMap[oldArticle.verticalid],
     settings: null,

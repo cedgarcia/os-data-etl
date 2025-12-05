@@ -23,19 +23,12 @@ export const fetchMappings = async () => {
 
   const fetchAndProcess = async (endpoint, type, processFn) => {
     try {
-      // console.log(`📤 Fetching ${type} from: ${endpoint}`)
       const response = await axios.get(endpoint, {
         headers: config.api.headers,
       })
 
-      // console.log(
-      //   `📋 Raw ${type} Response:`,
-      //   JSON.stringify(response.data, null, 2)
-      // )
-
       if (!response.data) {
-        // console.error(`❌ No data in ${type} response`)
-        return []
+        throw new Error(`No data in ${type} response`)
       }
 
       let dataArray = null
@@ -48,16 +41,14 @@ export const fetchMappings = async () => {
       } else if (Array.isArray(response.data.items)) {
         dataArray = response.data.items
       } else {
-        // console.error(`❌ Invalid ${type} response structure:`, response.data)
-        return []
+        throw new Error(`Invalid ${type} response structure`)
       }
 
-      // console.log(`📊 Found ${dataArray.length} ${type} items`)
       dataArray.forEach(processFn)
       return dataArray
     } catch (error) {
-      // console.error(`❌ Error fetching ${type}:`, error.message)
-      return []
+      console.error(`❌ Error fetching ${type}:`, error.message)
+      throw error
     }
   }
 
@@ -92,8 +83,6 @@ export const fetchMappings = async () => {
           const mssqlId = categoryIdMap[item.name.toUpperCase()]
           if (mssqlId) {
             mappings.categoryMap[mssqlId] = item.id
-          } else {
-            // console.warn(`⚠️ No MSSQL ID mapping for category: ${item.name}`)
           }
         })
       ),
@@ -116,20 +105,15 @@ export const fetchMappings = async () => {
           const mssqlId = leagueIdMap[item.name.toUpperCase()]
           if (mssqlId) {
             mappings.leagueMap[mssqlId] = item.id
-          } else {
-            // console.warn(`⚠️ No MSSQL ID mapping for league: ${item.name}`)
           }
         })
       ),
       limit(() =>
         fetchAndProcess(apiEndpoints.roles, 'roles', (item) => {
           if (!item.id || !item.name) {
-            // console.warn(`⚠️ Skipping role with missing id or name:`, item)
             return
           }
-          // Map role name to ID for easy lookup
           mappings.roleMap[item.name] = item.id
-          // console.log(`📌 Mapped role: ${item.name} -> ${item.id}`)
         })
       ),
       limit(() =>
@@ -138,21 +122,39 @@ export const fetchMappings = async () => {
             console.warn(`⚠️ Skipping user with missing id:`, item)
             return
           }
-          // Map by firstName (which is the author name from your migration)
           const authorName = item.firstName || ''
           mappings.usersMap[authorName] = item.id
-          // console.log(`📌 Mapped user: "${authorName}" -> ${item.id}`)
         })
       ),
     ])
-
     console.log(
       '✅ Mappings fetched successfully:',
       JSON.stringify(mappings, null, 2)
     )
+
+    // ✅ VALIDATE CRITICAL MAPPINGS
+    if (Object.keys(mappings.websiteMap).length === 0) {
+      throw new Error(
+        '❌ CRITICAL: No websites mapped! Migration cannot proceed.'
+      )
+    }
+
+    if (Object.keys(mappings.categoryMap).length === 0) {
+      throw new Error(
+        '❌ CRITICAL: No categories mapped! Migration cannot proceed.'
+      )
+    }
+
+    if (Object.keys(mappings.leagueMap).length === 0) {
+      throw new Error(
+        '❌ CRITICAL: No leagues mapped! Migration cannot proceed.'
+      )
+    }
+
+    console.log('✅ Mappings fetched and validated successfully')
     return mappings
   } catch (error) {
-    console.error('❌ Error in fetchMappings:', error.message)
+    console.error('❌ Fatal error in fetchMappings:', error.message)
     throw error
   }
 }
@@ -169,7 +171,6 @@ export const getMappings = async () => {
   return cachedMappings
 }
 
-// Export function to clear cache and force refresh
 export const clearMappingsCache = () => {
   console.log('🔄 Clearing mappings cache...')
   cachedMappings = null

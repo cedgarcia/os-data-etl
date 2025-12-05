@@ -71,6 +71,8 @@ const formatDuration = (ms) => {
   }
 }
 
+const sqsData = []
+
 // ============================================
 // POST TO WEBINY API FUNCTIONS
 // ============================================
@@ -306,7 +308,7 @@ export const logSuccessVideo = async (oldItem, webinyData) => {
   const webinyId = webinyData?.story?.id || null
 
   const query = `
-    INSERT INTO success_migration_videos 
+    INSERT INTO success_migrated_videos_migration_env  
     (id, title, description, intro, slug, webinyid)
     VALUES (?, ?, ?, ?, ?, ?)
   `
@@ -490,6 +492,7 @@ const processBatch = async (
 ) => {
   const batchStartTime = Date.now()
 
+  console.log('-----------------------------------------------')
   let successCount = 0
   let errorCount = 0
   let existingCount = 0
@@ -537,7 +540,7 @@ const processBatch = async (
       break
     case 'videos':
       checkExistingQuery = `
-        SELECT id FROM success_migration_videos
+        SELECT id FROM success_migrated_videos_migration_env 
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
@@ -627,7 +630,7 @@ const processBatch = async (
       }
     })
   )
-
+  console.log('TAPOS NA MEDIA FILE UPLOAD')
   const mappedResults = await Promise.all(mappedDataPromises)
 
   // Post and log data concurrently
@@ -684,6 +687,14 @@ const processBatch = async (
                   title: oldItem.title,
                   webinyId: postResult.data?.story?.id || null,
                 })
+
+                // // push sqs data
+                // sqsData.push({
+                //   legacyId: oldItem.id,
+                //   id: postResult.data?.story?.entryId || null,
+                //   leagueId: newItem.leagueId || null,
+                //   categoryId: newItem.categoryId || null,
+                // })
                 break
               case 'sponsors':
                 await logSuccessSponsor(oldItem, postResult.data)
@@ -904,7 +915,9 @@ export const migrateData = async (
 
   try {
     await getMappings()
-    const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
+
+    const { batchSize = 10, maxBatches = null, startOffset = 0 } = options //1050 //2300
+    // const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
     const limit = pLimit(1)
 
     console.log(`\nStarting migration for ${contentType} (${queryType})`)
@@ -1047,9 +1060,9 @@ export const migrateData = async (
         console.log(
           ` Elapsed Time: ${formatDuration(Date.now() - migrationStartTime)}`
         )
-        console.log(
-          ` Estimated Time Remaining: ${formatDuration(estimatedTimeRemaining)}`
-        )
+        // console.log(
+        //   ` Estimated Time Remaining: ${formatDuration(estimatedTimeRemaining)}`
+        // )
       } catch (error) {
         console.error(`Batch ${batchNum} failed:`, error.message)
         overallErrorCount += batchSize
@@ -1080,6 +1093,19 @@ export const migrateData = async (
         )
       })
     }
+
+    // const filteredSqsData = sqsData.filter(
+    //   (item) => item.id && item.leagueId && item.categoryId
+    // )
+    // const sqsTriggerResult = await axios.post(
+    //   `${config.api.baseUrl}/api/trigger-sqs`,
+    //   { data: filteredSqsData },
+    //   {
+    //     headers: config.api.headers,
+    //   }
+    // )
+    // console.log('sqsData:', sqsData)
+    // console.log('sqsTriggerResult:', sqsTriggerResult?.data)
 
     console.log(`TOTAL PROCESSED: ${totalProcessed}`)
     console.log(`TOTAL AVAILABLE MIGRATIONS: ${totalRecords}`)
@@ -1121,6 +1147,9 @@ export const migrateData = async (
 export const migrateBatch = async (migrations = []) => {
   const totalStartTime = Date.now()
   const results = {}
+
+  console.log('migrations to process:', migrations)
+  return
 
   for (const migration of migrations) {
     const { contentType, queryType, options } = migration

@@ -12,6 +12,23 @@ if (!fs.existsSync(logsDir)) {
 }
 
 /**
+ * Get current time in Philippine Time (PHT)
+ * @returns {string} Formatted datetime string
+ */
+const getPhilippineTime = () => {
+  return new Date().toLocaleString('en-PH', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+}
+
+/**
  * Writes a log entry to a text file
  * @param {string} filename - Name of the log file
  * @param {string} content - Content to write
@@ -44,7 +61,7 @@ export const initializeLogFile = (filename, contentType, status) => {
 ${'='.repeat(80)}
 ${status.toUpperCase()} ${contentType.toUpperCase()} MIGRATION LOG
 ${'='.repeat(80)}
-Migration Started: ${new Date().toISOString()}
+Migration Started: ${getPhilippineTime()} (PHT)
 ${'='.repeat(80)}
 
 `
@@ -66,7 +83,7 @@ Total Failed: ${summary.errorCount || 0}
 Total Existing: ${summary.existingCount || 0}
 Total Processed: ${summary.total || 0}
 Duration: ${summary.duration || 'N/A'}
-Completed: ${new Date().toISOString()}
+Completed: ${getPhilippineTime()} (PHT)
 ${'='.repeat(80)}
 `
   writeToLogFile(filename, summaryText, true)

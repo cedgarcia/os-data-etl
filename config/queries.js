@@ -110,19 +110,41 @@ const queries = {
     //      SELECT c.*, cv.subverticalid, cv.verticalid
     // FROM contents c
     // INNER JOIN contents_vertical cv ON c.id = cv.contentid
-    // WHERE c.id = 37888  ;
+    // WHERE c.id = 9435 ;
 
     //  `,
+    // all: `
+    //      SELECT c.*, cv.subverticalid, cv.verticalid
+    //   FROM contents c
+    //   INNER JOIN contents_vertical cv ON c.id = cv.contentid
+    //   WHERE c.id IN (35695, 27247, 22322, 27000, 26844)
+    // `,
+    // all: `
+    //      SELECT c.*, cv.subverticalid, cv.verticalid
+    //   FROM contents c
+    //   INNER JOIN contents_vertical cv ON c.id = cv.contentid
+    //   WHERE c.id IN (35696, 27248, 22323, 27001, 26845)
+    // `,
     all: `
-      SELECT c.*, cv.subverticalid, cv.verticalid
-      FROM contents c
-      INNER JOIN contents_vertical cv ON c.id = cv.contentid
-      WHERE cv.verticalid = 7
+        SELECT
+        c.*,
+        cv.subverticalid,
+        cv.verticalid
+    FROM contents c
+    INNER JOIN contents_vertical cv
+        ON c.id = cv.contentid
+    WHERE cv.verticalid = 7
       AND c.type = 4
       AND c.status = 'Published'
-      ORDER BY c.post
-      OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
-    `,
+      AND c.id NOT IN (
+            8388, 8404, 8407, 8966, 15490, 17174, 17250, 17251, 17253,
+            17282, 17286, 17355, 17357, 17378, 17465, 17545, 17546, 17547,
+            17573, 17713, 17715, 17718, 17793, 17821, 17887, 17911, 18035,
+            18039, 18084, 19667, 20037, 22691, 31143, 36040, 37775, 37888
+      )
+    ORDER BY c.post
+    OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+        `,
     custom: `
       SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c
