@@ -17,8 +17,8 @@ const query = `
 //  CRITICAL CONFIGURATION -> USE imagesFinale FOLDER
 // ==================================================
 // const folderPath = 'assets/images'
-const baseImageUrl = './assets/complete-images-nov1' // this contains already downloaded images "20291 items"
-const IMAGE_MAPPING_FILE = './logs/migrated_mediafiles_migration_env.json' // Store the mapping
+const baseImageUrl = './assets/media_files' // this contains already downloaded images "20291 items"
+const IMAGE_MAPPING_FILE = './logs/migrated_mediafiles.json' // Store the mapping
 // const IMAGE_MAPPING_FILE = './logs/dev-image-uploaded.json' // Store the mapping
 // const IMAGE_MAPPING_FILE = './logs/test-image-uploaded.json' // Store the mapping
 
