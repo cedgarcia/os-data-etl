@@ -16,7 +16,7 @@ export const logSuccessArticle = async (oldItem, webinyData) => {
   }
 
   const query = `
-    INSERT INTO success_migrated_articles_migration_env
+    INSERT INTO success_migration_articles
     (id, title, description, intro, slug, webinyid)
     VALUES (?, ?, ?, ?, ?, ?)
   `
@@ -121,7 +121,7 @@ export const logFailure = async (oldItem, errorMsg) => {
   ]
 
   const placeholders = columns.map(() => '?').join(', ')
-  const query = `INSERT INTO failed_migrated_articles_migration_env (${columns.join(
+  const query = `INSERT INTO failed_migration_articles (${columns.join(
     ', '
   )}) VALUES (${placeholders})`
 
@@ -132,13 +132,13 @@ export const logFailure = async (oldItem, errorMsg) => {
     sql.query(connectionString, query, params, (err, results) => {
       if (err) {
         console.error(
-          `Failed to log article ${oldItem.id} to failed_migrated_articles_migration_env:`,
+          `Failed to log article ${oldItem.id} to failed_migration_articles:`,
           err.message
         )
         reject(err)
       } else {
         console.log(
-          `Logged failed article ${oldItem.id} to failed_migrated_articles_migration_env: ${errorMsg}`
+          `Logged failed article ${oldItem.id} to failed_migration_articles: ${errorMsg}`
         )
         resolve(results)
       }
@@ -515,7 +515,7 @@ export const logSuccessVideo = async (oldItem, webinyData) => {
   const webinyId = webinyData?.story?.id || null
 
   const query = `
-    INSERT INTO success_migrated_videos_migration_env 
+    INSERT INTO success_migrated_videos
     (id, title, description, intro, slug, webinyid)
     VALUES (?, ?, ?, ?, ?, ?)
   `

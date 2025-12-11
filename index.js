@@ -534,13 +534,13 @@ const processBatch = async (
       break
     case 'articles':
       checkExistingQuery = `
-        SELECT id FROM success_migrated_articles_migration_env
+        SELECT id FROM success_migration_articles
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
     case 'videos':
       checkExistingQuery = `
-        SELECT id FROM success_migrated_videos_migration_env 
+        SELECT id FROM success_migration_videos 
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
