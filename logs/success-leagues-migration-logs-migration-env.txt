@@ -2,17 +2,17 @@
 ================================================================================
 SUCCESS LEAGUES MIGRATION LOG
 ================================================================================
-Migration Started: 12/01/2025, 14:03:01 (PHT)
+Migration Started: 12/10/2025, 09:29:29 (PHT)
 ================================================================================
 
-ID: 7 | Name: More Sports | Slug: more-sports | WebinyID: 692d2f950c83770002e89786#0001
-ID: 10 | Name: PVL | Slug: pvl | WebinyID: 692d2f95cd286b0002bf5c19#0001
-ID: 11 | Name: UAAP | Slug: uaap | WebinyID: 692d2f959408ed0002dd2263#0001
-ID: 6 | Name: Gilas | Slug: gilas | WebinyID: 692d2f95d04f4900025eafe4#0001
-ID: 21 | Name: Paris 2024 | Slug: paris-2024 | WebinyID: 692d2f950c83770002e89787#0001
-ID: 22 | Name: Alas | Slug: alas | WebinyID: 692d2f955499b10002a38a33#0001
-ID: 16 | Name: Esports | Slug: esports | WebinyID: 692d2f9604741c00022fdd21#0001
-ID: 9 | Name: PBA | Slug: pba | WebinyID: 692d2f9569f18000020a2370#0001
+ID: 21 | Title: N/A | Slug: paris-2024 | WebinyID: 6938ccf8cb387500029fe4aa#0001
+ID: 10 | Title: N/A | Slug: pvl | WebinyID: 6938ccf90bb041000296e2d8#0001
+ID: 11 | Title: N/A | Slug: uaap | WebinyID: 6938ccf81f068d0002fff4f7#0001
+ID: 16 | Title: N/A | Slug: esports | WebinyID: 6938ccf9496a190002c7e4a9#0001
+ID: 9 | Title: N/A | Slug: pba | WebinyID: 6938ccf99b69410002c0523a#0001
+ID: 7 | Title: N/A | Slug: more-sports | WebinyID: 6938ccf99a7ae0000263d7d4#0001
+ID: 6 | Title: N/A | Slug: gilas | WebinyID: 6938ccf968a3920002b8c8f1#0001
+ID: 22 | Title: N/A | Slug: alas | WebinyID: 6938ccfb7b7a210002a699b7#0001
 
 ================================================================================
 MIGRATION SUMMARY
@@ -21,7 +21,7 @@ Total Successful: 8
 Total Failed: 0
 Total Existing: 0
 Total Processed: 8
-Duration: 3s
-Completed: 12/01/2025, 14:03:05 (PHT)
+Duration: 4s
+Completed: 12/10/2025, 09:29:33 (PHT)
 ================================================================================
 

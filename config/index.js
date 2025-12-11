@@ -13,6 +13,7 @@ const {
   DB_DRIVER,
   DB_TRUSTED,
   LOG_DB_SERVER = DB_SERVER,
+  MIGRATION_START_OFFSET = '0',
 } = process.env
 
 // SOURCE DB – used to READ data from ONECMS
@@ -31,6 +32,9 @@ const config = {
   },
   api: apiConfig,
   queries,
+  migration: {
+    startOffset: parseInt(MIGRATION_START_OFFSET, 10),
+  },
 }
 
 export default config

@@ -534,7 +534,7 @@ const processBatch = async (
       break
     case 'articles':
       checkExistingQuery = `
-        SELECT id FROM success_migrated_articles_migration_env 
+        SELECT id FROM success_migrated_articles_migration_env
         WHERE id IN (${oldData.map(() => '?').join(', ')})
       `
       break
@@ -916,8 +916,11 @@ export const migrateData = async (
   try {
     await getMappings()
 
-    const { batchSize = 10, maxBatches = null, startOffset = 0 } = options //1050 //2300
-    // const { batchSize = 10, maxBatches = null, startOffset = 0 } = options
+    const {
+      batchSize = 10,
+      maxBatches = null,
+      startOffset = config.migration.startOffset || 0,
+    } = options
     const limit = pLimit(1)
 
     console.log(`\nStarting migration for ${contentType} (${queryType})`)

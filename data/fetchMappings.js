@@ -154,7 +154,7 @@ export const fetchMappings = async () => {
     console.log('✅ Mappings fetched and validated successfully')
     return mappings
   } catch (error) {
-    console.error('❌ Fatal error in fetchMappings:', error.message)
+    console.error('❌ Fatal error in fetchMappings:')
     throw error
   }
 }

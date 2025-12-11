@@ -16,7 +16,7 @@ export const logSuccessArticle = async (oldItem, webinyData) => {
   }
 
   const query = `
-    INSERT INTO success_migrated_articles_migration_env 
+    INSERT INTO success_migrated_articles_migration_env
     (id, title, description, intro, slug, webinyid)
     VALUES (?, ?, ?, ?, ?, ?)
   `
@@ -38,7 +38,7 @@ export const logSuccessArticle = async (oldItem, webinyData) => {
           err.message.includes('duplicate')
         ) {
           console.warn(
-            `DUPLICATE RECORD: Article ${oldItem.id} already exists in success_migrated_articles_migration_env `
+            `DUPLICATE RECORD: Article ${oldItem.id} already exists in success_migration_articles_local`
           )
           reject({ type: 'duplicate', message: err.message })
         } else {

@@ -2,14 +2,14 @@
 ================================================================================
 SUCCESS CATEGORIES MIGRATION LOG
 ================================================================================
-Migration Started: 12/01/2025, 14:12:06 (PHT)
+Migration Started: 12/10/2025, 09:34:36 (PHT)
 ================================================================================
 
-ID: 16 | Name: Editorial | WebinyID: 692d31b6cd286b0002bf5c1b#0001
-ID: 17 | Name: Features | WebinyID: 692d31b6d04f4900025eafe6#0001
-ID: 18 | Name: Sports Life | WebinyID: 692d31b60c83770002e89789#0001
-ID: 2 | Name: News |  WebinyID: 692d31b6c05b8c00025d21de#0001
-ID: 19 | Name: Videos |  WebinyID: 692d31b604741c00022fdd22#0001
+ID: 16 | Title: N/A | Slug: N/A | WebinyID: 6938ce2b0bb041000296e2d9#0001
+ID: 19 | Title: N/A | Slug: N/A | WebinyID: 6938ce2b9a7ae0000263d7d5#0001
+ID: 2 | Title: N/A | Slug: N/A | WebinyID: 6938ce2b9b69410002c0523b#0001
+ID: 18 | Title: N/A | Slug: N/A | WebinyID: 6938ce2b68a3920002b8c8f2#0001
+ID: 17 | Title: N/A | Slug: N/A | WebinyID: 6938ce2b1f068d0002fff4f8#0001
 
 ================================================================================
 MIGRATION SUMMARY
@@ -19,6 +19,6 @@ Total Failed: 0
 Total Existing: 0
 Total Processed: 5
 Duration: 2s
-Completed: 12/01/2025, 14:12:09 (PHT)
+Completed: 12/10/2025, 09:34:39 (PHT)
 ================================================================================
 
