@@ -515,7 +515,7 @@ export const logSuccessVideo = async (oldItem, webinyData) => {
   const webinyId = webinyData?.story?.id || null
 
   const query = `
-    INSERT INTO success_migrated_videos
+    INSERT INTO success_migration_videos
     (id, title, description, intro, slug, webinyid)
     VALUES (?, ?, ?, ?, ?, ?)
   `
