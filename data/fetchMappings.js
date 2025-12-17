@@ -101,6 +101,7 @@ export const fetchMappings = async () => {
             ESPORTS: 16,
             'PARIS 2024': 21,
             ALAS: 22,
+            'SEA GAMES': 24,
           }
           const mssqlId = leagueIdMap[item.name.toUpperCase()]
           if (mssqlId) {
