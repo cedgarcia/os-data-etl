@@ -171,15 +171,21 @@ const queries = {
       ORDER BY c.id
       OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
     `,
+    // all: `
+    //   SELECT c.*, cv.subverticalid, cv.verticalid
+    //   FROM contents c
+    //   INNER JOIN contents_vertical cv ON c.id = cv.contentid
+    //   WHERE cv.verticalid = 7
+    //   AND c.type = 5
+    //   AND c.status = 'Published'
+    //   ORDER BY c.post
+    //   OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+    // `,
     all: `
       SELECT c.*, cv.subverticalid, cv.verticalid
       FROM contents c
-      INNER JOIN contents_vertical cv ON c.id = cv.contentid
-      WHERE cv.verticalid = 7
-      AND c.type = 5
-      AND c.status = 'Published'
-      ORDER BY c.post
-      OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+      LEFT JOIN contents_vertical cv ON c.id = cv.contentid
+      WHERE c.id in (38174, 26847, 26936, 28161, 28168)
     `,
     custom: `
       SELECT c.*, cv.subverticalid, cv.verticalid
